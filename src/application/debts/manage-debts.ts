@@ -35,7 +35,17 @@ export async function getDebtPayments(debtId: string): Promise<DebtPayment[]> {
 export type DebtFormState = { error?: string } | undefined;
 
 function parseDebtForm(formData: FormData):
-  | { ok: true; value: { name: string; type: DebtType; amount: number; dueDay: number; totalInstallments: number | null } }
+  | {
+      ok: true;
+      value: {
+        name: string;
+        type: DebtType;
+        amount: number;
+        dueDay: number;
+        totalInstallments: number | null;
+        installmentsPaid: number;
+      };
+    }
   | { ok: false; error: string } {
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "otro") as DebtType;
@@ -43,6 +53,8 @@ function parseDebtForm(formData: FormData):
   const dueDay = Number(formData.get("dueDay"));
   const totalInstallmentsRaw = String(formData.get("totalInstallments") ?? "").trim();
   const totalInstallments = totalInstallmentsRaw ? Number(totalInstallmentsRaw) : null;
+  const installmentsPaidRaw = String(formData.get("installmentsPaid") ?? "").trim();
+  const installmentsPaid = installmentsPaidRaw ? Number(installmentsPaidRaw) : 0;
 
   if (!name) return { ok: false, error: "Ingresa un nombre." };
   if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Ingresa un monto válido." };
@@ -52,8 +64,14 @@ function parseDebtForm(formData: FormData):
   if (totalInstallments !== null && (!Number.isInteger(totalInstallments) || totalInstallments <= 0)) {
     return { ok: false, error: "La cantidad de cuotas debe ser un número mayor a 0, o déjalo vacío." };
   }
+  if (!Number.isInteger(installmentsPaid) || installmentsPaid < 0) {
+    return { ok: false, error: "Las cuotas pagadas deben ser un número de 0 o más." };
+  }
+  if (totalInstallments !== null && installmentsPaid > totalInstallments) {
+    return { ok: false, error: "Las cuotas pagadas no pueden ser más que el total de cuotas." };
+  }
 
-  return { ok: true, value: { name, type, amount, dueDay, totalInstallments } };
+  return { ok: true, value: { name, type, amount, dueDay, totalInstallments, installmentsPaid } };
 }
 
 export async function createDebt(_prev: DebtFormState, formData: FormData): Promise<DebtFormState> {
@@ -69,6 +87,7 @@ export async function createDebt(_prev: DebtFormState, formData: FormData): Prom
     amount: parsed.value.amount,
     due_day: parsed.value.dueDay,
     total_installments: parsed.value.totalInstallments,
+    installments_paid: parsed.value.installmentsPaid,
   });
 
   if (error) return { error: "No se pudo guardar el gasto." };
@@ -95,6 +114,7 @@ export async function updateDebt(_prev: DebtFormState, formData: FormData): Prom
       amount: parsed.value.amount,
       due_day: parsed.value.dueDay,
       total_installments: parsed.value.totalInstallments,
+      installments_paid: parsed.value.installmentsPaid,
     })
     .eq("id", id)
     .eq("user_id", userId);

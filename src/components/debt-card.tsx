@@ -1,4 +1,4 @@
-import { Archive } from "lucide-react";
+import { Archive, Calendar } from "lucide-react";
 import type { Debt } from "@/domain/entities/debt";
 import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
 import { isDebtFinished, calculateRemainingBalance } from "@/domain/finance/calculations";
@@ -43,9 +43,11 @@ export function DebtCard({ debt }: { debt: Debt }) {
 
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Cuota</span>
-          <span className="font-medium">
-            {formatCLP(debt.amount)} · día {debt.dueDay}
-          </span>
+          <span className="font-medium">{formatCLP(debt.amount)}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Calendar className="size-3.5" />
+          <span>Vence el día {debt.dueDay} de cada mes</span>
         </div>
 
         {progress !== null ? (

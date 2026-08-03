@@ -116,16 +116,28 @@ export function DebtFormDialog({ debt }: { debt?: Debt }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="totalInstallments">Cantidad de cuotas</Label>
-            <Input
-              id="totalInstallments"
-              name="totalInstallments"
-              type="number"
-              min="1"
-              defaultValue={debt?.totalInstallments ?? ""}
-              placeholder="Vacío = recurrente indefinido (plan, suscripción...)"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="totalInstallments">Cantidad de cuotas</Label>
+              <Input
+                id="totalInstallments"
+                name="totalInstallments"
+                type="number"
+                min="1"
+                defaultValue={debt?.totalInstallments ?? ""}
+                placeholder="Vacío = recurrente"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="installmentsPaid">Cuotas ya pagadas</Label>
+              <Input
+                id="installmentsPaid"
+                name="installmentsPaid"
+                type="number"
+                min="0"
+                defaultValue={debt?.installmentsPaid ?? 0}
+              />
+            </div>
           </div>
 
           {state?.error && (
