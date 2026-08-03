@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Pencil } from "lucide-react";
 import { createDebt, updateDebt, type DebtFormState } from "@/application/debts/manage-debts";
-import { DEBT_TYPES, DEBT_TYPE_LABELS, type Debt } from "@/domain/entities/debt";
+import { DEBT_TYPES, DEBT_TYPE_LABELS, type Debt, type DebtType } from "@/domain/entities/debt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +77,9 @@ export function DebtFormDialog({ debt }: { debt?: Debt }) {
             <Label htmlFor="type">Tipo</Label>
             <Select name="type" defaultValue={debt?.type ?? "otro"}>
               <SelectTrigger id="type" className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {(value: DebtType) => DEBT_TYPE_LABELS[value] ?? "Selecciona un tipo"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {DEBT_TYPES.map((type) => (

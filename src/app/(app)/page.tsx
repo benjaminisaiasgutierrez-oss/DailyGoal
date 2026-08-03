@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LogOut } from "lucide-react";
+import { Calendar, LogOut } from "lucide-react";
 import { getCurrentUser } from "@/application/auth/get-session";
 import { logout } from "@/application/auth/authenticate-user";
 import { getDebts } from "@/application/debts/manage-debts";
@@ -11,8 +11,10 @@ import {
   getWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
+import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
 import { formatCLP } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -119,11 +121,23 @@ export default async function HomePage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {upcoming.map((debt) => (
-              <div key={debt.id} className="flex items-center justify-between text-sm">
-                <span>{debt.name}</span>
-                <span className="text-muted-foreground">
-                  día {debt.dueDay} · {formatCLP(debt.amount)}
-                </span>
+              <div
+                key={debt.id}
+                className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2"
+              >
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">{debt.name}</span>
+                  <Badge variant="secondary" className="w-fit text-[10px]">
+                    {DEBT_TYPE_LABELS[debt.type]}
+                  </Badge>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-sm font-medium">{formatCLP(debt.amount)}</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Calendar className="size-3" />
+                    día {debt.dueDay}
+                  </span>
+                </div>
               </div>
             ))}
           </CardContent>
