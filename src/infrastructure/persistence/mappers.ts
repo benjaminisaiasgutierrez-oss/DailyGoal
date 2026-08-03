@@ -1,6 +1,7 @@
 import type { Debt, DebtPayment, DebtType } from "@/domain/entities/debt";
 import type { UberLog } from "@/domain/entities/uber-log";
 import type { UserSettings } from "@/domain/entities/user-settings";
+import type { Income, IncomeType } from "@/domain/entities/income";
 
 type DebtRow = {
   id: string;
@@ -87,5 +88,27 @@ export function mapUserSettings(row: UserSettingsRow): UserSettings {
     kmPerLiter: Number(row.km_per_liter),
     workDays: row.work_days,
     updatedAt: row.updated_at,
+  };
+}
+
+type IncomeRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: IncomeType;
+  amount: number;
+  income_date: string;
+  created_at: string;
+};
+
+export function mapIncome(row: IncomeRow): Income {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    type: row.type,
+    amount: Number(row.amount),
+    incomeDate: row.income_date,
+    createdAt: row.created_at,
   };
 }

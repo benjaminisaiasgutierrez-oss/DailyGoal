@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/application/auth/get-session";
 import { logout } from "@/application/auth/authenticate-user";
 import { getDebts } from "@/application/debts/manage-debts";
 import { getUberLogsInRange, getUserSettings } from "@/application/uber/manage-uber";
+import { getIncomesInRange } from "@/application/incomes/manage-incomes";
 import {
   calculateDailyGoal,
   calculateMonthlyTotal,
@@ -35,20 +36,27 @@ function currentMonthRange() {
 export default async function HomePage() {
   const { year, month, first, last, today } = currentMonthRange();
 
-  const [user, debts, settings, logsThisMonth] = await Promise.all([
+  const [user, debts, settings, logsThisMonth, incomesThisMonth] = await Promise.all([
     getCurrentUser(),
     getDebts(),
     getUserSettings(),
     getUberLogsInRange(first, last),
+    getIncomesInRange(first, last),
   ]);
 
   const monthlyTotal = calculateMonthlyTotal(debts);
   const workingDays = getWorkingDaysInMonth(year, month, settings.workDays);
   const dailyGoal = calculateDailyGoal(monthlyTotal, workingDays);
 
-  const earnedThisMonth = logsThisMonth.reduce((sum, log) => sum + log.earnings, 0);
+  const uberEarnedThisMonth = logsThisMonth.reduce((sum, log) => sum + log.earnings, 0);
+  const incomeThisMonth = incomesThisMonth.reduce((sum, income) => sum + income.amount, 0);
+  const earnedThisMonth = uberEarnedThisMonth + incomeThisMonth;
+
   const todayLog = logsThisMonth.find((log) => log.logDate === today);
-  const earnedToday = todayLog?.earnings ?? 0;
+  const incomeToday = incomesThisMonth
+    .filter((income) => income.incomeDate === today)
+    .reduce((sum, income) => sum + income.amount, 0);
+  const earnedToday = (todayLog?.earnings ?? 0) + incomeToday;
   const fuelCostToday = todayLog?.fuelCost ?? 0;
   const totalToEarnToday = dailyGoal + fuelCostToday;
   const net = earnedThisMonth - monthlyTotal;
@@ -104,6 +112,11 @@ export default async function HomePage() {
             <span className="text-muted-foreground">Ganado</span>
             <span className="font-medium">{formatCLP(earnedThisMonth)}</span>
           </div>
+          {incomeThisMonth > 0 && (
+            <div className="flex items-center justify-between pl-3 text-xs text-muted-foreground">
+              <span>Uber {formatCLP(uberEarnedThisMonth)} + Ingresos {formatCLP(incomeThisMonth)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Cuentas del mes</span>
             <span className="font-medium">{formatCLP(monthlyTotal)}</span>
