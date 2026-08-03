@@ -3,6 +3,9 @@
 
 create extension if not exists pgcrypto;
 
+-- Nota: este es el estado completo para un proyecto nuevo. Si tu base ya
+-- tenía este tipo creado con menos valores, usa las migraciones en
+-- supabase/migrations/ (ALTER TYPE ... ADD VALUE) en vez de este archivo.
 create type debt_type as enum (
   'plan',
   'credito_consumo',
@@ -10,6 +13,15 @@ create type debt_type as enum (
   'credito_hipotecario',
   'credito_automotriz',
   'prestado',
+  'comida',
+  'ahorro',
+  'arriendo',
+  'servicios_basicos',
+  'salud',
+  'transporte',
+  'educacion',
+  'entretenimiento',
+  'mantencion_vehiculo',
   'otro'
 );
 

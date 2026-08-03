@@ -47,7 +47,10 @@ export default async function HomePage() {
   const dailyGoal = calculateDailyGoal(monthlyTotal, workingDays);
 
   const earnedThisMonth = logsThisMonth.reduce((sum, log) => sum + log.earnings, 0);
-  const earnedToday = logsThisMonth.find((log) => log.logDate === today)?.earnings ?? 0;
+  const todayLog = logsThisMonth.find((log) => log.logDate === today);
+  const earnedToday = todayLog?.earnings ?? 0;
+  const fuelCostToday = todayLog?.fuelCost ?? 0;
+  const totalToEarnToday = dailyGoal + fuelCostToday;
   const net = earnedThisMonth - monthlyTotal;
 
   const activeDebts = debts.filter(isDebtOwingThisMonth);
@@ -75,9 +78,19 @@ export default async function HomePage() {
       </div>
 
       <Card>
-        <CardContent className="flex flex-col items-center gap-1 py-6 text-center">
+        <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
           <span className="text-sm text-muted-foreground">Meta diaria</span>
           <span className="text-3xl font-semibold tracking-tight">{formatCLP(dailyGoal)}</span>
+
+          {fuelCostToday > 0 && (
+            <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-3 py-2 text-xs">
+              <span className="text-muted-foreground">
+                Meta {formatCLP(dailyGoal)} + Bencina de hoy {formatCLP(fuelCostToday)}
+              </span>
+              <span className="font-medium">Total a ganar hoy: {formatCLP(totalToEarnToday)}</span>
+            </div>
+          )}
+
           <span className="text-xs text-muted-foreground">Hoy ganaste {formatCLP(earnedToday)}</span>
         </CardContent>
       </Card>
