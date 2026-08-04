@@ -13,13 +13,15 @@ export async function getIncomes(limit = 50): Promise<Income[]> {
     .from("incomes")
     .select("*")
     .eq("user_id", userId)
-    .order("income_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw new Error("No se pudieron cargar los ingresos.");
   return (data ?? []).map(mapIncome);
 }
 
+// Incluye los ingresos de fecha única dentro del rango, más TODOS los
+// recurrentes (no tienen income_date — se repiten cada mes por definición).
 export async function getIncomesInRange(startDate: string, endDate: string): Promise<Income[]> {
   const { userId } = await verifySession();
   const supabase = await createClient();
@@ -27,9 +29,10 @@ export async function getIncomesInRange(startDate: string, endDate: string): Pro
     .from("incomes")
     .select("*")
     .eq("user_id", userId)
-    .gte("income_date", startDate)
-    .lte("income_date", endDate)
-    .order("income_date", { ascending: false });
+    .or(
+      `is_recurring.eq.true,and(is_recurring.eq.false,income_date.gte.${startDate},income_date.lte.${endDate})`
+    )
+    .order("created_at", { ascending: false });
 
   if (error) throw new Error("No se pudieron cargar los ingresos.");
   return (data ?? []).map(mapIncome);
@@ -38,18 +41,37 @@ export async function getIncomesInRange(startDate: string, endDate: string): Pro
 export type IncomeFormState = { error?: string } | undefined;
 
 function parseIncomeForm(formData: FormData):
-  | { ok: true; value: { name: string; type: IncomeType; amount: number; incomeDate: string } }
+  | {
+      ok: true;
+      value: {
+        name: string;
+        type: IncomeType;
+        amount: number;
+        isRecurring: boolean;
+        incomeDate: string | null;
+        paymentDay: number | null;
+      };
+    }
   | { ok: false; error: string } {
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "otro") as IncomeType;
   const amount = Number(formData.get("amount"));
-  const incomeDate = String(formData.get("incomeDate") ?? "");
+  const isRecurring = formData.get("isRecurring") === "on";
 
   if (!name) return { ok: false, error: "Ingresa un nombre." };
   if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Ingresa un monto válido." };
-  if (!incomeDate) return { ok: false, error: "Selecciona una fecha." };
 
-  return { ok: true, value: { name, type, amount, incomeDate } };
+  if (isRecurring) {
+    const paymentDay = Number(formData.get("paymentDay"));
+    if (!Number.isInteger(paymentDay) || paymentDay < 1 || paymentDay > 31) {
+      return { ok: false, error: "El día de pago debe estar entre 1 y 31." };
+    }
+    return { ok: true, value: { name, type, amount, isRecurring, incomeDate: null, paymentDay } };
+  }
+
+  const incomeDate = String(formData.get("incomeDate") ?? "");
+  if (!incomeDate) return { ok: false, error: "Selecciona una fecha." };
+  return { ok: true, value: { name, type, amount, isRecurring, incomeDate, paymentDay: null } };
 }
 
 export async function createIncome(
@@ -66,7 +88,9 @@ export async function createIncome(
     name: parsed.value.name,
     type: parsed.value.type,
     amount: parsed.value.amount,
+    is_recurring: parsed.value.isRecurring,
     income_date: parsed.value.incomeDate,
+    payment_day: parsed.value.paymentDay,
   });
 
   if (error) return { error: "No se pudo guardar el ingreso." };
@@ -94,7 +118,9 @@ export async function updateIncome(
       name: parsed.value.name,
       type: parsed.value.type,
       amount: parsed.value.amount,
+      is_recurring: parsed.value.isRecurring,
       income_date: parsed.value.incomeDate,
+      payment_day: parsed.value.paymentDay,
     })
     .eq("id", id)
     .eq("user_id", userId);

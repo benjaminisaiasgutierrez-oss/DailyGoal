@@ -17,6 +17,8 @@ export type Income = {
   name: string;
   type: IncomeType;
   amount: number;
-  incomeDate: string;
+  isRecurring: boolean;
+  incomeDate: string | null;
+  paymentDay: number | null;
   createdAt: string;
 };

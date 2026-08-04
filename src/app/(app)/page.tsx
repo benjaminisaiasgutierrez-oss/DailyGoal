@@ -52,9 +52,12 @@ export default async function HomePage() {
   const incomeThisMonth = incomesThisMonth.reduce((sum, income) => sum + income.amount, 0);
   const earnedThisMonth = uberEarnedThisMonth + incomeThisMonth;
 
+  const todayDayOfMonth = new Date().getDate();
   const todayLog = logsThisMonth.find((log) => log.logDate === today);
   const incomeToday = incomesThisMonth
-    .filter((income) => income.incomeDate === today)
+    .filter((income) =>
+      income.isRecurring ? income.paymentDay === todayDayOfMonth : income.incomeDate === today
+    )
     .reduce((sum, income) => sum + income.amount, 0);
   const earnedToday = (todayLog?.earnings ?? 0) + incomeToday;
   const fuelCostToday = todayLog?.fuelCost ?? 0;

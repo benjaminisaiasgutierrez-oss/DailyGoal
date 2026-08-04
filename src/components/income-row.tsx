@@ -18,7 +18,9 @@ export function IncomeRow({ income }: { income: Income }) {
             <Badge variant="secondary" className="text-[10px]">
               {INCOME_TYPE_LABELS[income.type]}
             </Badge>
-            <span className="text-xs text-muted-foreground">{income.incomeDate}</span>
+            <span className="text-xs text-muted-foreground">
+              {income.isRecurring ? `Recurrente · día ${income.paymentDay}` : income.incomeDate}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-1">

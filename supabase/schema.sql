@@ -87,14 +87,35 @@ create type income_type as enum (
   'otro'
 );
 
+-- income_date = null significa "recurrente" (ej. sueldo mensual), y en ese
+-- caso payment_day (día del mes) reemplaza a la fecha única.
 create table incomes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
   type income_type not null default 'otro',
   amount numeric(12, 2) not null check (amount >= 0),
-  income_date date not null,
-  created_at timestamptz not null default now()
+  is_recurring boolean not null default false,
+  income_date date,
+  payment_day smallint check (
+    payment_day is null
+    or (
+      payment_day between 1 and 31
+    )
+  ),
+  created_at timestamptz not null default now(),
+  constraint incomes_recurrence_shape check (
+    (
+      is_recurring = false
+      and income_date is not null
+      and payment_day is null
+    )
+    or (
+      is_recurring = true
+      and income_date is null
+      and payment_day is not null
+    )
+  )
 );
 
 create index incomes_user_id_idx on incomes (user_id);

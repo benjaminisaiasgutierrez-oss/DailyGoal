@@ -8,6 +8,7 @@ import { INCOME_TYPES, INCOME_TYPE_LABELS, type Income, type IncomeType } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ function todayISO() {
 
 export function IncomeFormDialog({ income }: { income?: Income }) {
   const [open, setOpen] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(income?.isRecurring ?? false);
   const action = income ? updateIncome : createIncome;
   const [state, formAction, pending] = useActionState<IncomeFormState, FormData>(action, undefined);
   const wasPending = useRef(false);
@@ -95,19 +97,43 @@ export function IncomeFormDialog({ income }: { income?: Income }) {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="amount">Monto</Label>
+            <Input
+              id="amount"
+              name="amount"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={income?.amount}
+              required
+            />
+          </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              name="isRecurring"
+              checked={isRecurring}
+              onCheckedChange={(checked) => setIsRecurring(checked === true)}
+            />
+            Ingreso recurrente (ej: sueldo mensual)
+          </label>
+
+          {isRecurring ? (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="amount">Monto</Label>
+              <Label htmlFor="paymentDay">Día de pago (cada mes)</Label>
               <Input
-                id="amount"
-                name="amount"
+                id="paymentDay"
+                name="paymentDay"
                 type="number"
-                min="0"
-                step="1"
-                defaultValue={income?.amount}
+                min="1"
+                max="31"
+                defaultValue={income?.paymentDay ?? ""}
+                placeholder="Ej: 30"
                 required
               />
             </div>
+          ) : (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="incomeDate">Fecha</Label>
               <Input
@@ -118,7 +144,7 @@ export function IncomeFormDialog({ income }: { income?: Income }) {
                 required
               />
             </div>
-          </div>
+          )}
 
           {state?.error && (
             <p role="alert" className="text-sm text-destructive">

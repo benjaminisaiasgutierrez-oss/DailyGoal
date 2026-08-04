@@ -97,7 +97,9 @@ type IncomeRow = {
   name: string;
   type: IncomeType;
   amount: number;
-  income_date: string;
+  is_recurring: boolean;
+  income_date: string | null;
+  payment_day: number | null;
   created_at: string;
 };
 
@@ -108,7 +110,9 @@ export function mapIncome(row: IncomeRow): Income {
     name: row.name,
     type: row.type,
     amount: Number(row.amount),
+    isRecurring: row.is_recurring,
     incomeDate: row.income_date,
+    paymentDay: row.payment_day,
     createdAt: row.created_at,
   };
 }
