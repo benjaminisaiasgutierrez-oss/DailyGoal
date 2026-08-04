@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Landmark } from "lucide-react";
 import { getIncomes } from "@/application/incomes/manage-incomes";
 import { formatCLP } from "@/lib/format";
 import { IncomeFormDialog } from "@/components/income-form-dialog";
 import { IncomeRow } from "@/components/income-row";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Ingresos",
@@ -19,7 +23,16 @@ export default async function IngresosPage() {
           <h1 className="text-xl font-semibold tracking-tight">Ingresos</h1>
           <p className="text-sm text-muted-foreground">Total registrado: {formatCLP(total)}</p>
         </div>
-        <IncomeFormDialog />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/ingresos/mercadopago"
+            className={cn(buttonVariants({ variant: "outline", size: "icon-sm" }))}
+            aria-label="Importar de Mercado Pago"
+          >
+            <Landmark className="size-4" />
+          </Link>
+          <IncomeFormDialog />
+        </div>
       </div>
 
       {incomes.length === 0 && (

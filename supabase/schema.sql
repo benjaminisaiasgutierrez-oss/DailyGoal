@@ -103,6 +103,8 @@ create table incomes (
       payment_day between 1 and 31
     )
   ),
+  -- Presente cuando el ingreso se importó desde un pago de Mercado Pago.
+  mercadopago_payment_id text,
   created_at timestamptz not null default now(),
   constraint incomes_recurrence_shape check (
     (
@@ -119,6 +121,10 @@ create table incomes (
 );
 
 create index incomes_user_id_idx on incomes (user_id);
+
+create unique index incomes_user_mp_payment_unique on incomes (user_id, mercadopago_payment_id)
+where
+  mercadopago_payment_id is not null;
 
 -- Row Level Security: cada usuario solo ve y modifica sus propios datos.
 alter table debts enable row level security;

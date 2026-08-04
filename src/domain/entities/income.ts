@@ -20,5 +20,6 @@ export type Income = {
   isRecurring: boolean;
   incomeDate: string | null;
   paymentDay: number | null;
+  mercadopagoPaymentId: string | null;
   createdAt: string;
 };
