@@ -100,7 +100,6 @@ type IncomeRow = {
   is_recurring: boolean;
   income_date: string | null;
   payment_day: number | null;
-  mercadopago_payment_id: string | null;
   created_at: string;
 };
 
@@ -114,7 +113,6 @@ export function mapIncome(row: IncomeRow): Income {
     isRecurring: row.is_recurring,
     incomeDate: row.income_date,
     paymentDay: row.payment_day,
-    mercadopagoPaymentId: row.mercadopago_payment_id,
     createdAt: row.created_at,
   };
 }

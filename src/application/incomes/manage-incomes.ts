@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/infrastructure/persistence/supabase-server";
 import { verifySession } from "@/application/auth/get-session";
 import { mapIncome } from "@/infrastructure/persistence/mappers";
-import { getPaymentById } from "@/application/mercadopago/fetch-payments";
 import type { Income, IncomeType } from "@/domain/entities/income";
 
 export async function getIncomes(limit = 50): Promise<Income[]> {
@@ -139,44 +138,4 @@ export async function deleteIncome(incomeId: string): Promise<void> {
   await supabase.from("incomes").delete().eq("id", incomeId).eq("user_id", userId);
   revalidatePath("/ingresos");
   revalidatePath("/");
-}
-
-export async function importFromMercadoPago(paymentId: number): Promise<{ error?: string }> {
-  const { userId } = await verifySession();
-
-  let payment;
-  try {
-    payment = await getPaymentById(paymentId);
-  } catch {
-    return { error: "No se pudo obtener el pago desde Mercado Pago." };
-  }
-
-  const incomeDate = payment.dateApproved
-    ? payment.dateApproved.slice(0, 10)
-    : new Date().toISOString().slice(0, 10);
-  const name = payment.description?.trim() || `Pago Mercado Pago #${payment.id}`;
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("incomes").insert({
-    user_id: userId,
-    name,
-    type: "otro",
-    amount: payment.amount,
-    is_recurring: false,
-    income_date: incomeDate,
-    payment_day: null,
-    mercadopago_payment_id: String(payment.id),
-  });
-
-  if (error) {
-    if (error.code === "23505") {
-      return { error: "Ese pago ya fue importado." };
-    }
-    return { error: "No se pudo importar el pago." };
-  }
-
-  revalidatePath("/ingresos");
-  revalidatePath("/ingresos/mercadopago");
-  revalidatePath("/");
-  return {};
 }
