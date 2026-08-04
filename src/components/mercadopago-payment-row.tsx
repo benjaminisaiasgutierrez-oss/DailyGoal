@@ -4,11 +4,18 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { importFromMercadoPago } from "@/application/incomes/manage-incomes";
-import type { MercadoPagoPayment } from "@/application/mercadopago/fetch-payments";
+import { formatOperationType, type MercadoPagoPayment } from "@/application/mercadopago/fetch-payments";
 import { formatCLP } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
+function paymentTitle(payment: MercadoPagoPayment): string {
+  if (payment.payerName) return payment.payerName;
+  if (payment.payerEmail) return payment.payerEmail;
+  if (payment.description) return payment.description;
+  return formatOperationType(payment.operationType);
+}
 
 export function MercadoPagoPaymentRow({
   payment,
@@ -36,10 +43,10 @@ export function MercadoPagoPaymentRow({
     <Card>
       <CardContent className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">{payment.description ?? `Pago #${payment.id}`}</span>
+          <span className="text-sm font-medium">{paymentTitle(payment)}</span>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-[10px]">
-              {payment.operationType}
+              {formatOperationType(payment.operationType)}
             </Badge>
             <span className="text-xs text-muted-foreground">
               {payment.dateApproved?.slice(0, 10) ?? "-"}

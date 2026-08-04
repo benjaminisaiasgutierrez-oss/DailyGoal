@@ -11,6 +11,7 @@ export type MercadoPagoPayment = {
   operationType: string;
   dateApproved: string | null;
   payerEmail: string | null;
+  payerName: string | null;
 };
 
 type MpUser = { id: number };
@@ -24,12 +25,39 @@ type MpPaymentRow = {
   operation_type: string;
   date_approved: string | null;
   collector_id: number;
-  payer?: { email?: string | null };
+  payer?: { email?: string | null; first_name?: string | null; last_name?: string | null };
 };
 
 type MpSearchResponse = { results: MpPaymentRow[] };
 
+// Mercado Pago devuelve el tipo de operación en snake_case interno
+// (ej. "money_exchange") — esto lo traduce a algo legible.
+const MP_OPERATION_TYPE_LABELS: Record<string, string> = {
+  regular_payment: "Pago",
+  money_transfer: "Transferencia",
+  recurring_payment: "Pago recurrente",
+  account_fund: "Carga de saldo",
+  money_exchange: "Cambio de moneda",
+  pos_pay: "Pago en punto de venta",
+  invoice: "Factura",
+  withdraw: "Retiro",
+  refund: "Reembolso",
+  cellphone_recharge: "Recarga celular",
+  payment_addition: "Pago adicional",
+};
+
+export function formatOperationType(operationType: string): string {
+  return (
+    MP_OPERATION_TYPE_LABELS[operationType] ??
+    operationType.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase())
+  );
+}
+
 function mapPayment(row: MpPaymentRow): MercadoPagoPayment {
+  const firstName = row.payer?.first_name?.trim();
+  const lastName = row.payer?.last_name?.trim();
+  const payerName = [firstName, lastName].filter(Boolean).join(" ") || null;
+
   return {
     id: row.id,
     amount: Number(row.transaction_amount),
@@ -38,6 +66,7 @@ function mapPayment(row: MpPaymentRow): MercadoPagoPayment {
     operationType: row.operation_type,
     dateApproved: row.date_approved,
     payerEmail: row.payer?.email ?? null,
+    payerName,
   };
 }
 
