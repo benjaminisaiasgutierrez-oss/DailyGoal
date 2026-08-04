@@ -116,7 +116,7 @@ export function IncomeFormDialog({ income }: { income?: Income }) {
               checked={isRecurring}
               onCheckedChange={(checked) => setIsRecurring(checked === true)}
             />
-            Ingreso Fijo (ej: sueldo mensual)
+            Ingreso Fijo
           </label>
 
           {isRecurring ? (
