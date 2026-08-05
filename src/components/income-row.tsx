@@ -1,12 +1,11 @@
-import { Trash2 } from "lucide-react";
 import type { Income } from "@/domain/entities/income";
 import { INCOME_TYPE_LABELS } from "@/domain/entities/income";
 import { formatCLP } from "@/lib/format";
 import { deleteIncome } from "@/application/incomes/manage-incomes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { IncomeFormDialog } from "@/components/income-form-dialog";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 
 export function IncomeRow({ income }: { income: Income }) {
   return (
@@ -26,11 +25,11 @@ export function IncomeRow({ income }: { income: Income }) {
         <div className="flex items-center gap-1">
           <span className="text-sm font-medium">{formatCLP(income.amount)}</span>
           <IncomeFormDialog income={income} />
-          <form action={deleteIncome.bind(null, income.id)}>
-            <Button type="submit" variant="ghost" size="icon-sm" aria-label="Eliminar ingreso">
-              <Trash2 className="size-3.5" />
-            </Button>
-          </form>
+          <ConfirmDeleteButton
+            action={deleteIncome.bind(null, income.id)}
+            confirmMessage={`¿Eliminar "${income.name}"? Esta acción no se puede deshacer.`}
+            label="Eliminar ingreso"
+          />
         </div>
       </CardContent>
     </Card>

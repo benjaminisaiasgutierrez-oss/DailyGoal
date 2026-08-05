@@ -28,6 +28,7 @@ function parseSavingsGoalForm(formData: FormData):
         name: string;
         targetAmount: number | null;
         targetDate: string | null;
+        savedAmount: number;
       };
     }
   | { ok: false; error: string } {
@@ -35,13 +36,18 @@ function parseSavingsGoalForm(formData: FormData):
   const targetAmountRaw = String(formData.get("targetAmount") ?? "").trim();
   const targetAmount = targetAmountRaw ? Number(targetAmountRaw) : null;
   const targetDate = String(formData.get("targetDate") ?? "").trim() || null;
+  const savedAmountRaw = String(formData.get("savedAmount") ?? "").trim();
+  const savedAmount = savedAmountRaw ? Number(savedAmountRaw) : 0;
 
   if (!name) return { ok: false, error: "Ingresa un nombre para la meta." };
   if (targetAmount !== null && (!Number.isFinite(targetAmount) || targetAmount <= 0)) {
     return { ok: false, error: "La meta debe ser un monto válido, o déjala vacía." };
   }
+  if (!Number.isFinite(savedAmount) || savedAmount < 0) {
+    return { ok: false, error: "Lo ahorrado debe ser un número de 0 o más." };
+  }
 
-  return { ok: true, value: { name, targetAmount, targetDate } };
+  return { ok: true, value: { name, targetAmount, targetDate, savedAmount } };
 }
 
 export async function createSavingsGoal(
@@ -58,6 +64,7 @@ export async function createSavingsGoal(
     name: parsed.value.name,
     target_amount: parsed.value.targetAmount,
     target_date: parsed.value.targetDate,
+    saved_amount: parsed.value.savedAmount,
   });
 
   if (error) return { error: "No se pudo crear la meta." };
@@ -85,6 +92,7 @@ export async function updateSavingsGoal(
       name: parsed.value.name,
       target_amount: parsed.value.targetAmount,
       target_date: parsed.value.targetDate,
+      saved_amount: parsed.value.savedAmount,
     })
     .eq("id", id)
     .eq("user_id", userId);

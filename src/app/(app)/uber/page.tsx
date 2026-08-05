@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { deleteLog, getUberLogs, getUserSettings } from "@/application/uber/manage-uber";
 import { formatCLP, formatNumber } from "@/lib/format";
 import { UberLogForm } from "@/components/uber-log-form";
+import { UberLogFormDialog } from "@/components/uber-log-form-dialog";
 import { UberSettingsForm } from "@/components/uber-settings-form";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 
@@ -53,11 +54,14 @@ export default async function UberPage() {
                 )}
               </div>
             </div>
-            <ConfirmDeleteButton
-              action={deleteLog.bind(null, log.id)}
-              confirmMessage={`¿Eliminar el registro del ${log.logDate}?`}
-              label="Eliminar registro"
-            />
+            <div className="flex items-center gap-1">
+              <UberLogFormDialog log={log} />
+              <ConfirmDeleteButton
+                action={deleteLog.bind(null, log.id)}
+                confirmMessage={`¿Eliminar el registro del ${log.logDate}?`}
+                label="Eliminar registro"
+              />
+            </div>
           </div>
         ))}
       </div>

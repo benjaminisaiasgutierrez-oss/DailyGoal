@@ -75,6 +75,17 @@ export function SavingsGoalFormDialog({ goal }: { goal?: SavingsGoal }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="savedAmount">Ahorrado</Label>
+              <Input
+                id="savedAmount"
+                name="savedAmount"
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={goal?.savedAmount ?? 0}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="targetAmount">Meta (opcional)</Label>
               <Input
                 id="targetAmount"
@@ -86,15 +97,11 @@ export function SavingsGoalFormDialog({ goal }: { goal?: SavingsGoal }) {
                 placeholder="Ej: 500000"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="targetDate">Fecha objetivo</Label>
-              <Input
-                id="targetDate"
-                name="targetDate"
-                type="date"
-                defaultValue={goal?.targetDate ?? ""}
-              />
-            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="targetDate">Fecha objetivo</Label>
+            <Input id="targetDate" name="targetDate" type="date" defaultValue={goal?.targetDate ?? ""} />
           </div>
 
           {state?.error && (
