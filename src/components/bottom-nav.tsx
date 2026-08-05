@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, TrendingUp, Wallet, Car } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Wallet, Car, PiggyBank } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BASE_ITEMS = [
   { href: "/", label: "Resumen", icon: LayoutDashboard },
   { href: "/ingresos", label: "Ingresos", icon: TrendingUp },
   { href: "/gastos", label: "Gastos", icon: Wallet },
+  { href: "/ahorro", label: "Ahorro", icon: PiggyBank },
 ];
 
 const UBER_ITEM = { href: "/uber", label: "Uber", icon: Car };

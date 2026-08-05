@@ -26,9 +26,6 @@ export default async function AjustesPage() {
         <CardContent className="flex flex-col gap-1">
           <span className="text-sm font-medium">{user?.name ?? "Sin nombre"}</span>
           <span className="text-sm text-muted-foreground">{user?.email}</span>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Estos datos vienen de tu cuenta de Google — se administran desde ahí.
-          </p>
         </CardContent>
       </Card>
 
@@ -43,7 +40,7 @@ export default async function AjustesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Uber y ahorro</CardTitle>
+          <CardTitle className="text-base">Uber</CardTitle>
         </CardHeader>
         <CardContent>
           <GeneralSettingsForm settings={settings} />

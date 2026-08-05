@@ -10,7 +10,7 @@ import {
   calculateMonthlyTotal,
   calculateRemainingBalance,
   calculateSavedAmount,
-  getWorkingDaysInMonth,
+  resolveWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
 import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
@@ -50,7 +50,7 @@ export default async function HomePage() {
   const uberModeEnabled = settings.uberModeEnabled;
 
   const monthlyTotal = calculateMonthlyTotal(debts);
-  const workingDays = getWorkingDaysInMonth(year, month, settings.workDays);
+  const workingDays = resolveWorkingDaysInMonth(settings, year, month);
   const dailyGoal = calculateDailyGoal(monthlyTotal, workingDays);
 
   const uberEarnedThisMonth = logsThisMonth.reduce((sum, log) => sum + log.earnings, 0);
@@ -147,39 +147,37 @@ export default async function HomePage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Ahorro</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {savingsGoal ? (
-            <>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Ahorrado</span>
-                <span className="font-medium">{formatCLP(savedAmount)}</span>
-              </div>
-              <Progress value={savingsProgress} />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Meta {formatCLP(savingsGoal)}</span>
-                <span>Faltan {formatCLP(Math.max(savingsGoal - savedAmount, 0))}</span>
-              </div>
-              {settings.savingsGoalTargetDate && (
-                <span className="text-xs text-muted-foreground">
-                  Objetivo: {settings.savingsGoalTargetDate}
-                </span>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Todavía ahorraste {formatCLP(savedAmount)}. Define una meta en{" "}
-              <Link href="/ajustes" className="underline">
-                Ajustes
-              </Link>{" "}
-              para ver tu avance.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <Link href="/ahorro">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Ahorro</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {savingsGoal ? (
+              <>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Ahorrado</span>
+                  <span className="font-medium">{formatCLP(savedAmount)}</span>
+                </div>
+                <Progress value={savingsProgress} />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Meta {formatCLP(savingsGoal)}</span>
+                  <span>Faltan {formatCLP(Math.max(savingsGoal - savedAmount, 0))}</span>
+                </div>
+                {settings.savingsGoalTargetDate && (
+                  <span className="text-xs text-muted-foreground">
+                    Objetivo: {settings.savingsGoalTargetDate}
+                  </span>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Todavía ahorraste {formatCLP(savedAmount)}. Toca para definir una meta.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card>
         <CardHeader>

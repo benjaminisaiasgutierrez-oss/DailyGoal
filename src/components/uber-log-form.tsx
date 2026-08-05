@@ -48,6 +48,16 @@ export function UberLogForm() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="startTime">Hora inicio</Label>
+              <Input id="startTime" name="startTime" type="time" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="endTime">Hora término</Label>
+              <Input id="endTime" name="endTime" type="time" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="fuelLiters">Litros cargados</Label>
               <Input
                 id="fuelLiters"
@@ -60,7 +70,7 @@ export function UberLogForm() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="fuelCost">Costo bencina</Label>
-              <Input id="fuelCost" name="fuelCost" type="number" min="0" step="1" placeholder="Opcional" />
+              <Input id="fuelCost" name="fuelCost" type="number" min="0" step="1" required />
             </div>
           </div>
 

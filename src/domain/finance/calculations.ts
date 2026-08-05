@@ -1,5 +1,6 @@
 import type { Debt } from "@/domain/entities/debt";
 import type { Income } from "@/domain/entities/income";
+import type { UserSettings } from "@/domain/entities/user-settings";
 
 export function isDebtFinished(
   debt: Pick<Debt, "totalInstallments" | "installmentsPaid">
@@ -32,6 +33,17 @@ export function getWorkingDaysInMonth(year: number, month: number, workDays: num
     if (workDays.includes(weekday)) count++;
   }
   return count;
+}
+
+export function resolveWorkingDaysInMonth(
+  settings: Pick<UserSettings, "workDaysMode" | "workDays" | "workDaysPerMonth">,
+  year: number,
+  month: number
+): number {
+  if (settings.workDaysMode === "fixed_count") {
+    return settings.workDaysPerMonth ?? 0;
+  }
+  return getWorkingDaysInMonth(year, month, settings.workDays);
 }
 
 export function calculateDailyGoal(monthlyTotal: number, workingDaysInMonth: number): number {

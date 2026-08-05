@@ -54,6 +54,8 @@ create table debt_payments (
 create index debt_payments_debt_id_idx on debt_payments (debt_id);
 
 -- Registro diario de actividad como conductor.
+-- fuel_cost queda nullable a nivel de base (para no romper filas viejas),
+-- pero la app lo exige siempre al guardar un registro nuevo.
 create table uber_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -62,6 +64,8 @@ create table uber_logs (
   earnings numeric(12, 2) not null default 0 check (earnings >= 0),
   fuel_liters numeric(8, 2) check (fuel_liters is null or fuel_liters >= 0),
   fuel_cost numeric(12, 2) check (fuel_cost is null or fuel_cost >= 0),
+  start_time time,
+  end_time time,
   created_at timestamptz not null default now(),
   unique (user_id, log_date)
 );
@@ -69,11 +73,19 @@ create table uber_logs (
 create index uber_logs_user_id_idx on uber_logs (user_id);
 
 -- Configuración por usuario. work_days: 0 = domingo ... 6 = sábado.
+-- work_days_mode: 'weekdays' usa work_days; 'fixed_count' usa work_days_per_month.
 create table user_settings (
   user_id uuid primary key references auth.users (id) on delete cascade,
   fuel_price_per_liter numeric(10, 2) not null default 0,
   km_per_liter numeric(6, 2) not null default 0,
   work_days smallint[] not null default '{1,2,3,4,5,6}',
+  work_days_mode text not null default 'weekdays' check (work_days_mode in ('weekdays', 'fixed_count')),
+  work_days_per_month smallint check (
+    work_days_per_month is null
+    or (
+      work_days_per_month between 1 and 31
+    )
+  ),
   uber_mode_enabled boolean not null default true,
   savings_goal_amount numeric(12, 2),
   savings_goal_target_date date,

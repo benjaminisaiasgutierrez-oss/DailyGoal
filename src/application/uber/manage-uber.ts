@@ -52,6 +52,8 @@ export async function getUserSettings(): Promise<UserSettings> {
       fuelPricePerLiter: 0,
       kmPerLiter: 0,
       workDays: DEFAULT_WORK_DAYS,
+      workDaysMode: "weekdays",
+      workDaysPerMonth: null,
       uberModeEnabled: true,
       savingsGoalAmount: null,
       savingsGoalTargetDate: null,
@@ -72,7 +74,9 @@ export async function saveLog(_prev: UberFormState, formData: FormData): Promise
   const fuelLitersRaw = String(formData.get("fuelLiters") ?? "").trim();
   const fuelCostRaw = String(formData.get("fuelCost") ?? "").trim();
   const fuelLiters = fuelLitersRaw ? Number(fuelLitersRaw) : null;
-  const fuelCost = fuelCostRaw ? Number(fuelCostRaw) : null;
+  const fuelCost = fuelCostRaw ? Number(fuelCostRaw) : NaN;
+  const startTime = String(formData.get("startTime") ?? "").trim() || null;
+  const endTime = String(formData.get("endTime") ?? "").trim() || null;
 
   if (!logDate) return { error: "Selecciona una fecha." };
   if (!Number.isFinite(kmDriven) || kmDriven < 0) return { error: "Ingresa los km recorridos." };
@@ -80,8 +84,8 @@ export async function saveLog(_prev: UberFormState, formData: FormData): Promise
   if (fuelLiters !== null && (!Number.isFinite(fuelLiters) || fuelLiters < 0)) {
     return { error: "Los litros cargados no son válidos." };
   }
-  if (fuelCost !== null && (!Number.isFinite(fuelCost) || fuelCost < 0)) {
-    return { error: "El costo de bencina no es válido." };
+  if (!Number.isFinite(fuelCost) || fuelCost < 0) {
+    return { error: "Ingresa el costo de bencina cargada ese día." };
   }
 
   const supabase = await createClient();
@@ -93,6 +97,8 @@ export async function saveLog(_prev: UberFormState, formData: FormData): Promise
       earnings,
       fuel_liters: fuelLiters,
       fuel_cost: fuelCost,
+      start_time: startTime,
+      end_time: endTime,
     },
     { onConflict: "user_id,log_date" }
   );
@@ -117,7 +123,10 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
 
   const fuelPricePerLiter = Number(formData.get("fuelPricePerLiter"));
   const kmPerLiter = Number(formData.get("kmPerLiter"));
+  const workDaysMode = String(formData.get("workDaysMode") ?? "weekdays");
   const workDays = formData.getAll("workDays").map((value) => Number(value));
+  const workDaysPerMonthRaw = String(formData.get("workDaysPerMonth") ?? "").trim();
+  const workDaysPerMonth = workDaysPerMonthRaw ? Number(workDaysPerMonthRaw) : null;
 
   if (!Number.isFinite(fuelPricePerLiter) || fuelPricePerLiter < 0) {
     return { error: "Ingresa un precio de bencina válido." };
@@ -125,8 +134,20 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
   if (!Number.isFinite(kmPerLiter) || kmPerLiter < 0) {
     return { error: "Ingresa un rendimiento km/litro válido." };
   }
-  if (workDays.length === 0) {
+  if (workDaysMode !== "weekdays" && workDaysMode !== "fixed_count") {
+    return { error: "Modo de días de trabajo inválido." };
+  }
+  if (workDaysMode === "weekdays" && workDays.length === 0) {
     return { error: "Selecciona al menos un día de trabajo." };
+  }
+  if (
+    workDaysMode === "fixed_count" &&
+    (workDaysPerMonth === null ||
+      !Number.isFinite(workDaysPerMonth) ||
+      workDaysPerMonth < 1 ||
+      workDaysPerMonth > 31)
+  ) {
+    return { error: "Ingresa una cantidad de días al mes válida (1 a 31)." };
   }
 
   const supabase = await createClient();
@@ -135,7 +156,9 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
       user_id: userId,
       fuel_price_per_liter: fuelPricePerLiter,
       km_per_liter: kmPerLiter,
-      work_days: workDays,
+      work_days: workDays.length > 0 ? workDays : DEFAULT_WORK_DAYS,
+      work_days_mode: workDaysMode,
+      work_days_per_month: workDaysMode === "fixed_count" ? workDaysPerMonth : null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

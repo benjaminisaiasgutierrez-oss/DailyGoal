@@ -6,5 +6,7 @@ export type UberLog = {
   earnings: number;
   fuelLiters: number | null;
   fuelCost: number | null;
+  startTime: string | null;
+  endTime: string | null;
   createdAt: string;
 };

@@ -1,6 +1,6 @@
 import type { Debt, DebtPayment, DebtType } from "@/domain/entities/debt";
 import type { UberLog } from "@/domain/entities/uber-log";
-import type { UserSettings } from "@/domain/entities/user-settings";
+import type { UserSettings, WorkDaysMode } from "@/domain/entities/user-settings";
 import type { Income, IncomeType } from "@/domain/entities/income";
 
 type DebtRow = {
@@ -32,6 +32,8 @@ type UberLogRow = {
   earnings: number;
   fuel_liters: number | null;
   fuel_cost: number | null;
+  start_time: string | null;
+  end_time: string | null;
   created_at: string;
 };
 
@@ -40,6 +42,8 @@ type UserSettingsRow = {
   fuel_price_per_liter: number;
   km_per_liter: number;
   work_days: number[];
+  work_days_mode: WorkDaysMode;
+  work_days_per_month: number | null;
   uber_mode_enabled: boolean;
   savings_goal_amount: number | null;
   savings_goal_target_date: string | null;
@@ -80,6 +84,8 @@ export function mapUberLog(row: UberLogRow): UberLog {
     earnings: Number(row.earnings),
     fuelLiters: row.fuel_liters !== null ? Number(row.fuel_liters) : null,
     fuelCost: row.fuel_cost !== null ? Number(row.fuel_cost) : null,
+    startTime: row.start_time,
+    endTime: row.end_time,
     createdAt: row.created_at,
   };
 }
@@ -90,6 +96,8 @@ export function mapUserSettings(row: UserSettingsRow): UserSettings {
     fuelPricePerLiter: Number(row.fuel_price_per_liter),
     kmPerLiter: Number(row.km_per_liter),
     workDays: row.work_days,
+    workDaysMode: row.work_days_mode,
+    workDaysPerMonth: row.work_days_per_month,
     uberModeEnabled: row.uber_mode_enabled,
     savingsGoalAmount: row.savings_goal_amount !== null ? Number(row.savings_goal_amount) : null,
     savingsGoalTargetDate: row.savings_goal_target_date,

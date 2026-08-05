@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getUberLogs, getUserSettings } from "@/application/uber/manage-uber";
 import { formatCLP, formatNumber } from "@/lib/format";
 import { UberLogForm } from "@/components/uber-log-form";
@@ -10,6 +11,10 @@ export const metadata: Metadata = {
 
 export default async function UberPage() {
   const [logs, settings] = await Promise.all([getUberLogs(), getUserSettings()]);
+
+  if (!settings.uberModeEnabled) {
+    redirect("/");
+  }
 
   return (
     <div className="flex flex-col gap-5 px-4 py-6 pb-24">
@@ -30,9 +35,21 @@ export default async function UberPage() {
           >
             <div className="flex flex-col">
               <span className="font-medium">{log.logDate}</span>
-              <span className="text-xs text-muted-foreground">{formatNumber(log.kmDriven)} km</span>
+              <span className="text-xs text-muted-foreground">
+                {formatNumber(log.kmDriven)} km
+                {log.startTime && log.endTime
+                  ? ` · ${log.startTime.slice(0, 5)} - ${log.endTime.slice(0, 5)}`
+                  : ""}
+              </span>
             </div>
-            <span className="font-medium">{formatCLP(log.earnings)}</span>
+            <div className="flex flex-col items-end">
+              <span className="font-medium">{formatCLP(log.earnings)}</span>
+              {log.fuelCost !== null && (
+                <span className="text-xs text-muted-foreground">
+                  Bencina {formatCLP(log.fuelCost)}
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>
