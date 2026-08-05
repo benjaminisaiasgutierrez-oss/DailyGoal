@@ -76,6 +76,7 @@ function parseUberLogForm(formData: FormData):
         earnings: number;
         fuelLiters: number | null;
         fuelCost: number;
+        fuelPricePerLiter: number | null;
         fuelType: string;
         tripCount: number | null;
         tips: number | null;
@@ -92,6 +93,8 @@ function parseUberLogForm(formData: FormData):
   const fuelCostRaw = String(formData.get("fuelCost") ?? "").trim();
   const fuelLiters = fuelLitersRaw ? Number(fuelLitersRaw) : null;
   const fuelCost = fuelCostRaw ? Number(fuelCostRaw) : NaN;
+  const fuelPricePerLiterRaw = String(formData.get("fuelPricePerLiter") ?? "").trim();
+  const fuelPricePerLiter = fuelPricePerLiterRaw ? Number(fuelPricePerLiterRaw) : null;
   const fuelType = String(formData.get("fuelType") ?? "");
   const tripCountRaw = String(formData.get("tripCount") ?? "").trim();
   const tripCount = tripCountRaw ? Number(tripCountRaw) : null;
@@ -112,7 +115,13 @@ function parseUberLogForm(formData: FormData):
     return { ok: false, error: "Los litros cargados no son válidos." };
   }
   if (!Number.isFinite(fuelCost) || fuelCost < 0) {
-    return { ok: false, error: "Ingresa el costo de bencina cargada ese día." };
+    return { ok: false, error: "Ingresa cuánto gastaste en bencina ese día." };
+  }
+  if (
+    fuelPricePerLiter !== null &&
+    (!Number.isFinite(fuelPricePerLiter) || fuelPricePerLiter < 0)
+  ) {
+    return { ok: false, error: "El precio por litro no es válido." };
   }
   if (!FUEL_TYPES.includes(fuelType as (typeof FUEL_TYPES)[number])) {
     return { ok: false, error: "Selecciona qué tipo de bencina cargaste." };
@@ -135,6 +144,7 @@ function parseUberLogForm(formData: FormData):
       earnings,
       fuelLiters,
       fuelCost,
+      fuelPricePerLiter,
       fuelType,
       tripCount,
       tips,
@@ -160,6 +170,7 @@ export async function saveLog(_prev: UberFormState, formData: FormData): Promise
     earnings: parsed.value.earnings,
     fuel_liters: parsed.value.fuelLiters,
     fuel_cost: parsed.value.fuelCost,
+    fuel_price_per_liter: parsed.value.fuelPricePerLiter,
     fuel_type: parsed.value.fuelType,
     trip_count: parsed.value.tripCount,
     tips: parsed.value.tips,
@@ -194,6 +205,7 @@ export async function updateLog(_prev: UberFormState, formData: FormData): Promi
       earnings: parsed.value.earnings,
       fuel_liters: parsed.value.fuelLiters,
       fuel_cost: parsed.value.fuelCost,
+      fuel_price_per_liter: parsed.value.fuelPricePerLiter,
       fuel_type: parsed.value.fuelType,
       trip_count: parsed.value.tripCount,
       tips: parsed.value.tips,

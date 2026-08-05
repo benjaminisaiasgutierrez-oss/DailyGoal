@@ -119,7 +119,22 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="fuelCost">Costo bencina</Label>
+          <Label htmlFor="fuelPricePerLiter">Precio por litro</Label>
+          <Input
+            id="fuelPricePerLiter"
+            name="fuelPricePerLiter"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={log?.fuelPricePerLiter ?? ""}
+            placeholder="Opcional"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="fuelCost">Gasto en bencina</Label>
           <Input
             id="fuelCost"
             name="fuelCost"
@@ -130,9 +145,6 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
             required
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="fuelType">Tipo de bencina</Label>
           <Select name="fuelType" defaultValue={log?.fuelType ?? "93"}>
@@ -150,6 +162,9 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="tips">Propinas</Label>
           <Input
@@ -162,19 +177,18 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
             placeholder="Opcional"
           />
         </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tripCount">Número de viajes</Label>
-        <Input
-          id="tripCount"
-          name="tripCount"
-          type="number"
-          min="0"
-          step="1"
-          defaultValue={log?.tripCount ?? ""}
-          placeholder="Opcional"
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="tripCount">Número de viajes</Label>
+          <Input
+            id="tripCount"
+            name="tripCount"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={log?.tripCount ?? ""}
+            placeholder="Opcional"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">

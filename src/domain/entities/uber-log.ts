@@ -30,6 +30,7 @@ export type UberLog = {
   earnings: number;
   fuelLiters: number | null;
   fuelCost: number | null;
+  fuelPricePerLiter: number | null;
   fuelType: FuelType | null;
   tripCount: number | null;
   tips: number | null;

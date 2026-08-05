@@ -75,6 +75,10 @@ create table uber_logs (
   earnings numeric(12, 2) not null default 0 check (earnings >= 0),
   fuel_liters numeric(8, 2) check (fuel_liters is null or fuel_liters >= 0),
   fuel_cost numeric(12, 2) check (fuel_cost is null or fuel_cost >= 0),
+  fuel_price_per_liter numeric(10, 2) check (
+    fuel_price_per_liter is null
+    or fuel_price_per_liter >= 0
+  ),
   fuel_type fuel_type,
   trip_count smallint check (trip_count is null or trip_count >= 0),
   tips numeric(12, 2) check (tips is null or tips >= 0),

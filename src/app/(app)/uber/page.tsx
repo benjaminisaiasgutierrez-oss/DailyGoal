@@ -86,6 +86,8 @@ export default async function UberPage() {
                   {log.fuelCost !== null && (
                     <span className="text-xs text-muted-foreground">
                       Bencina {formatCLP(log.fuelCost)}
+                      {log.fuelPricePerLiter !== null &&
+                        ` · ${formatCLP(log.fuelPricePerLiter)}/L`}
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground">Neto {formatCLP(netProfit)}</span>

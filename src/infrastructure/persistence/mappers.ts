@@ -34,6 +34,7 @@ type UberLogRow = {
   earnings: number;
   fuel_liters: number | null;
   fuel_cost: number | null;
+  fuel_price_per_liter: number | null;
   fuel_type: FuelType | null;
   trip_count: number | null;
   tips: number | null;
@@ -101,6 +102,7 @@ export function mapUberLog(row: UberLogRow): UberLog {
     earnings: Number(row.earnings),
     fuelLiters: row.fuel_liters !== null ? Number(row.fuel_liters) : null,
     fuelCost: row.fuel_cost !== null ? Number(row.fuel_cost) : null,
+    fuelPricePerLiter: row.fuel_price_per_liter !== null ? Number(row.fuel_price_per_liter) : null,
     fuelType: row.fuel_type,
     tripCount: row.trip_count,
     tips: row.tips !== null ? Number(row.tips) : null,
