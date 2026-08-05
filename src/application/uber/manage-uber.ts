@@ -15,6 +15,7 @@ export async function getUberLogs(limit = 30): Promise<UberLog[]> {
     .select("*")
     .eq("user_id", userId)
     .order("log_date", { ascending: false })
+    .order("start_time", { ascending: true, nullsFirst: true })
     .limit(limit);
 
   if (error) throw new Error("No se pudo cargar el historial de Uber.");
@@ -30,7 +31,8 @@ export async function getUberLogsInRange(startDate: string, endDate: string): Pr
     .eq("user_id", userId)
     .gte("log_date", startDate)
     .lte("log_date", endDate)
-    .order("log_date", { ascending: false });
+    .order("log_date", { ascending: false })
+    .order("start_time", { ascending: true, nullsFirst: true });
 
   if (error) throw new Error("No se pudo cargar el historial de Uber.");
   return (data ?? []).map(mapUberLog);
@@ -65,9 +67,24 @@ export async function getUserSettings(): Promise<UserSettings> {
 
 export type UberFormState = { error?: string } | undefined;
 
-export async function saveLog(_prev: UberFormState, formData: FormData): Promise<UberFormState> {
-  const { userId } = await verifySession();
-
+function parseUberLogForm(formData: FormData):
+  | {
+      ok: true;
+      value: {
+        logDate: string;
+        kmDriven: number;
+        earnings: number;
+        fuelLiters: number | null;
+        fuelCost: number;
+        fuelType: string;
+        tripCount: number | null;
+        tips: number | null;
+        platforms: string[];
+        startTime: string | null;
+        endTime: string | null;
+      };
+    }
+  | { ok: false; error: string } {
   const logDate = String(formData.get("logDate") ?? "");
   const kmDriven = Number(formData.get("kmDriven"));
   const earnings = Number(formData.get("earnings"));
@@ -84,48 +101,110 @@ export async function saveLog(_prev: UberFormState, formData: FormData): Promise
   const startTime = String(formData.get("startTime") ?? "").trim() || null;
   const endTime = String(formData.get("endTime") ?? "").trim() || null;
 
-  if (!logDate) return { error: "Selecciona una fecha." };
-  if (!Number.isFinite(kmDriven) || kmDriven < 0) return { error: "Ingresa los km recorridos." };
-  if (!Number.isFinite(earnings) || earnings < 0) return { error: "Ingresa lo que ganaste ese día." };
+  if (!logDate) return { ok: false, error: "Selecciona una fecha." };
+  if (!Number.isFinite(kmDriven) || kmDriven < 0) {
+    return { ok: false, error: "Ingresa los km recorridos." };
+  }
+  if (!Number.isFinite(earnings) || earnings < 0) {
+    return { ok: false, error: "Ingresa lo que ganaste ese día." };
+  }
   if (fuelLiters !== null && (!Number.isFinite(fuelLiters) || fuelLiters < 0)) {
-    return { error: "Los litros cargados no son válidos." };
+    return { ok: false, error: "Los litros cargados no son válidos." };
   }
   if (!Number.isFinite(fuelCost) || fuelCost < 0) {
-    return { error: "Ingresa el costo de bencina cargada ese día." };
+    return { ok: false, error: "Ingresa el costo de bencina cargada ese día." };
   }
   if (!FUEL_TYPES.includes(fuelType as (typeof FUEL_TYPES)[number])) {
-    return { error: "Selecciona qué tipo de bencina cargaste." };
+    return { ok: false, error: "Selecciona qué tipo de bencina cargaste." };
   }
   if (tripCount !== null && (!Number.isInteger(tripCount) || tripCount < 0)) {
-    return { error: "El número de viajes no es válido." };
+    return { ok: false, error: "El número de viajes no es válido." };
   }
   if (tips !== null && (!Number.isFinite(tips) || tips < 0)) {
-    return { error: "Las propinas no son válidas." };
+    return { ok: false, error: "Las propinas no son válidas." };
   }
   if (!platforms.every((p) => RIDESHARE_PLATFORMS.includes(p as (typeof RIDESHARE_PLATFORMS)[number]))) {
-    return { error: "Plataforma inválida." };
+    return { ok: false, error: "Plataforma inválida." };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("uber_logs").upsert(
-    {
-      user_id: userId,
-      log_date: logDate,
-      km_driven: kmDriven,
+  return {
+    ok: true,
+    value: {
+      logDate,
+      kmDriven,
       earnings,
-      fuel_liters: fuelLiters,
-      fuel_cost: fuelCost,
-      fuel_type: fuelType,
-      trip_count: tripCount,
+      fuelLiters,
+      fuelCost,
+      fuelType,
+      tripCount,
       tips,
       platforms,
-      start_time: startTime,
-      end_time: endTime,
+      startTime,
+      endTime,
     },
-    { onConflict: "user_id,log_date" }
-  );
+  };
+}
+
+// Siempre crea un registro nuevo (puede haber más de uno por día, ej.
+// turno mañana y turno tarde).
+export async function saveLog(_prev: UberFormState, formData: FormData): Promise<UberFormState> {
+  const { userId } = await verifySession();
+  const parsed = parseUberLogForm(formData);
+  if (!parsed.ok) return { error: parsed.error };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("uber_logs").insert({
+    user_id: userId,
+    log_date: parsed.value.logDate,
+    km_driven: parsed.value.kmDriven,
+    earnings: parsed.value.earnings,
+    fuel_liters: parsed.value.fuelLiters,
+    fuel_cost: parsed.value.fuelCost,
+    fuel_type: parsed.value.fuelType,
+    trip_count: parsed.value.tripCount,
+    tips: parsed.value.tips,
+    platforms: parsed.value.platforms,
+    start_time: parsed.value.startTime,
+    end_time: parsed.value.endTime,
+  });
 
   if (error) return { error: "No se pudo guardar el registro." };
+
+  revalidatePath("/uber");
+  revalidatePath("/");
+  return undefined;
+}
+
+// Actualiza un registro puntual por id (la fecha ya no es la clave, así
+// que se puede editar libremente sin riesgo de chocar con otro turno).
+export async function updateLog(_prev: UberFormState, formData: FormData): Promise<UberFormState> {
+  const { userId } = await verifySession();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { error: "Registro no encontrado." };
+
+  const parsed = parseUberLogForm(formData);
+  if (!parsed.ok) return { error: parsed.error };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("uber_logs")
+    .update({
+      log_date: parsed.value.logDate,
+      km_driven: parsed.value.kmDriven,
+      earnings: parsed.value.earnings,
+      fuel_liters: parsed.value.fuelLiters,
+      fuel_cost: parsed.value.fuelCost,
+      fuel_type: parsed.value.fuelType,
+      trip_count: parsed.value.tripCount,
+      tips: parsed.value.tips,
+      platforms: parsed.value.platforms,
+      start_time: parsed.value.startTime,
+      end_time: parsed.value.endTime,
+    })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) return { error: "No se pudo actualizar el registro." };
 
   revalidatePath("/uber");
   revalidatePath("/");

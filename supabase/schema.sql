@@ -61,11 +61,12 @@ create type fuel_type as enum ('93', '95', '97', 'diesel', 'otro');
 
 create type rideshare_platform as enum ('uber', 'didi', 'cabify', 'indriver', 'otro');
 
--- Registro diario de actividad como conductor.
--- fuel_cost queda nullable a nivel de base (para no romper filas viejas),
--- pero la app lo exige siempre al guardar un registro nuevo. platforms es
--- un arreglo (puede trabajar con más de una app el mismo día) en vez de
--- una fila separada por plataforma, para no romper la unicidad por día.
+-- Registro de actividad como conductor. Puede haber más de uno por día
+-- (turnos separados, ej. mañana y tarde con distinta plataforma) — el id
+-- es la clave real de cada fila, no la fecha. fuel_cost queda nullable a
+-- nivel de base (para no romper filas viejas), pero la app lo exige
+-- siempre al guardar un registro nuevo. platforms es un arreglo (puede
+-- trabajar con más de una app en el mismo turno).
 create table uber_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -80,8 +81,7 @@ create table uber_logs (
   platforms rideshare_platform[] not null default '{}',
   start_time time,
   end_time time,
-  created_at timestamptz not null default now(),
-  unique (user_id, log_date)
+  created_at timestamptz not null default now()
 );
 
 create index uber_logs_user_id_idx on uber_logs (user_id);

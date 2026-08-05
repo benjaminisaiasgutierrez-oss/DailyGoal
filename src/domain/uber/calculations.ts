@@ -58,7 +58,7 @@ export function summarizeUberLogs(logs: UberLog[]): UberPeriodStats {
   const totalNet = logs.reduce((sum, log) => sum + calculateNetProfit(log), 0);
   const totalKm = logs.reduce((sum, log) => sum + log.kmDriven, 0);
   const totalHours = logs.reduce((sum, log) => sum + (calculateHoursWorked(log) ?? 0), 0);
-  const daysWorked = logs.length;
+  const daysWorked = new Set(logs.map((log) => log.logDate)).size;
 
   return {
     totalEarnings,

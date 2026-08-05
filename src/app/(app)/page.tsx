@@ -62,14 +62,15 @@ export default async function HomePage() {
   const earnedThisMonth = uberEarnedThisMonth + incomeThisMonth;
 
   const todayDayOfMonth = new Date().getDate();
-  const todayLog = logsThisMonth.find((log) => log.logDate === today);
+  const todayLogs = logsThisMonth.filter((log) => log.logDate === today);
   const incomeToday = incomesThisMonth
     .filter((income) =>
       income.isRecurring ? income.paymentDay === todayDayOfMonth : income.incomeDate === today
     )
     .reduce((sum, income) => sum + income.amount, 0);
-  const earnedToday = (todayLog ? calculateTotalEarnings(todayLog) : 0) + incomeToday;
-  const fuelCostToday = todayLog?.fuelCost ?? 0;
+  const uberEarnedToday = todayLogs.reduce((sum, log) => sum + calculateTotalEarnings(log), 0);
+  const earnedToday = uberEarnedToday + incomeToday;
+  const fuelCostToday = todayLogs.reduce((sum, log) => sum + (log.fuelCost ?? 0), 0);
   const totalToEarnToday = dailyGoal + fuelCostToday;
   const net = earnedThisMonth - monthlyTotal;
 

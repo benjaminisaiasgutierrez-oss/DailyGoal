@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { saveLog, type UberFormState } from "@/application/uber/manage-uber";
+import { saveLog, updateLog, type UberFormState } from "@/application/uber/manage-uber";
 import {
   FUEL_TYPES,
   FUEL_TYPE_LABELS,
@@ -29,7 +29,8 @@ function todayISO() {
 }
 
 export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => void }) {
-  const [state, formAction, pending] = useActionState<UberFormState, FormData>(saveLog, undefined);
+  const action = log ? updateLog : saveLog;
+  const [state, formAction, pending] = useActionState<UberFormState, FormData>(action, undefined);
   const wasPending = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -47,6 +48,7 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
 
   const form = (
     <form ref={formRef} action={formAction} className="flex flex-col gap-4">
+      {log && <input type="hidden" name="id" value={log.id} />}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="logDate">Fecha</Label>
         <Input
@@ -54,11 +56,8 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
           name="logDate"
           type="date"
           defaultValue={log?.logDate ?? todayISO()}
-          readOnly={!!log}
-          className={log ? "bg-muted/40" : undefined}
           required
         />
-        {log && <p className="text-xs text-muted-foreground">La fecha no se puede cambiar.</p>}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
@@ -211,7 +210,7 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Registrar día</CardTitle>
+        <CardTitle className="text-base">Registrar turno</CardTitle>
       </CardHeader>
       <CardContent>{form}</CardContent>
     </Card>
