@@ -54,7 +54,7 @@ export default async function GastosPage() {
 
       {overdue.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-destructive">Vencidas ({overdue.length})</h2>
+          <h2 className="text-sm font-medium text-destructive">Vencidas</h2>
           {overdue.map((debt) => (
             <DebtCard key={debt.id} debt={debt} isOverdue />
           ))}
@@ -63,9 +63,7 @@ export default async function GastosPage() {
 
       {pending.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Pendientes este mes ({pending.length})
-          </h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Pendientes este mes</h2>
           {pending.map((debt) => (
             <DebtCard key={debt.id} debt={debt} />
           ))}
@@ -74,9 +72,7 @@ export default async function GastosPage() {
 
       {paidThisMonth.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Al día ({paidThisMonth.length})
-          </h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Al día</h2>
           {paidThisMonth.map((debt) => (
             <DebtCard key={debt.id} debt={debt} />
           ))}

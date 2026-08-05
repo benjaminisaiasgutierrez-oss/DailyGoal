@@ -33,7 +33,7 @@ export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: 
               {isOverdue && (
                 <Badge variant="destructive" className="w-fit">
                   {debt.installmentsOverdue > 0
-                    ? `Atrasado · ${debt.installmentsOverdue} cuota${debt.installmentsOverdue === 1 ? "" : "s"}`
+                    ? `${debt.installmentsOverdue} cuota${debt.installmentsOverdue === 1 ? "" : "s"} atrasada${debt.installmentsOverdue === 1 ? "" : "s"}`
                     : "Atrasado"}
                 </Badge>
               )}

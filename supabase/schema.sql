@@ -91,10 +91,22 @@ create table user_settings (
     )
   ),
   uber_mode_enabled boolean not null default true,
-  savings_goal_amount numeric(12, 2),
-  savings_goal_target_date date,
   updated_at timestamptz not null default now()
 );
+
+-- Metas de ahorro con nombre propio. saved_amount es un aporte manual
+-- (botón "Agregar aporte"), no se calcula solo desde Gastos/Ingresos.
+create table savings_goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  target_amount numeric(12, 2) check (target_amount is null or target_amount >= 0),
+  target_date date,
+  saved_amount numeric(12, 2) not null default 0 check (saved_amount >= 0),
+  created_at timestamptz not null default now()
+);
+
+create index savings_goals_user_id_idx on savings_goals (user_id);
 
 -- Ingresos generales, aparte de los registros diarios de Uber.
 create type income_type as enum (
@@ -146,6 +158,7 @@ alter table debt_payments enable row level security;
 alter table uber_logs enable row level security;
 alter table user_settings enable row level security;
 alter table incomes enable row level security;
+alter table savings_goals enable row level security;
 
 create policy "debts_select_own" on debts for select using (auth.uid () = user_id);
 
@@ -224,3 +237,15 @@ for update
   using (auth.uid () = user_id);
 
 create policy "incomes_delete_own" on incomes for delete using (auth.uid () = user_id);
+
+create policy "savings_goals_select_own" on savings_goals for select using (auth.uid () = user_id);
+
+create policy "savings_goals_insert_own" on savings_goals for insert
+with
+  check (auth.uid () = user_id);
+
+create policy "savings_goals_update_own" on savings_goals
+for update
+  using (auth.uid () = user_id);
+
+create policy "savings_goals_delete_own" on savings_goals for delete using (auth.uid () = user_id);

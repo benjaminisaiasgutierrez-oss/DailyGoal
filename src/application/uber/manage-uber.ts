@@ -55,8 +55,6 @@ export async function getUserSettings(): Promise<UserSettings> {
       workDaysMode: "weekdays",
       workDaysPerMonth: null,
       uberModeEnabled: true,
-      savingsGoalAmount: null,
-      savingsGoalTargetDate: null,
       updatedAt: new Date().toISOString(),
     };
   }

@@ -22,9 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export function DebtFormDialog({ debt }: { debt?: Debt }) {
   const [open, setOpen] = useState(false);
+  const [installmentsMode, setInstallmentsMode] = useState<"count" | "fixed">(
+    debt && debt.totalInstallments === null ? "fixed" : "count"
+  );
   const action = debt ? updateDebt : createDebt;
   const [state, formAction, pending] = useActionState<DebtFormState, FormData>(action, undefined);
   const wasPending = useRef(false);
@@ -118,18 +122,48 @@ export function DebtFormDialog({ debt }: { debt?: Debt }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="totalInstallments">Cantidad de cuotas</Label>
+          <div className="flex flex-col gap-1.5">
+            <Label>Cuotas</Label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setInstallmentsMode("count")}
+                className={cn(
+                  "flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors",
+                  installmentsMode === "count"
+                    ? "border-primary bg-primary/10 font-medium"
+                    : "border-input text-muted-foreground"
+                )}
+              >
+                Con cuotas
+              </button>
+              <button
+                type="button"
+                onClick={() => setInstallmentsMode("fixed")}
+                className={cn(
+                  "flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors",
+                  installmentsMode === "fixed"
+                    ? "border-primary bg-primary/10 font-medium"
+                    : "border-input text-muted-foreground"
+                )}
+              >
+                Gasto fijo
+              </button>
+            </div>
+            {installmentsMode === "count" && (
               <Input
                 id="totalInstallments"
                 name="totalInstallments"
                 type="number"
                 min="1"
                 defaultValue={debt?.totalInstallments ?? ""}
-                placeholder="Vacío = recurrente"
+                placeholder="Ej: 12"
+                className="mt-1"
               />
-            </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="installmentsPaid">Cuotas ya pagadas</Label>
               <Input
@@ -140,22 +174,20 @@ export function DebtFormDialog({ debt }: { debt?: Debt }) {
                 defaultValue={debt?.installmentsPaid ?? 0}
               />
             </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="installmentsOverdue">Cuotas atrasadas</Label>
+              <Input
+                id="installmentsOverdue"
+                name="installmentsOverdue"
+                type="number"
+                min="0"
+                defaultValue={debt?.installmentsOverdue ?? 0}
+              />
+            </div>
           </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="installmentsOverdue">Cuotas atrasadas</Label>
-            <Input
-              id="installmentsOverdue"
-              name="installmentsOverdue"
-              type="number"
-              min="0"
-              defaultValue={debt?.installmentsOverdue ?? 0}
-            />
-            <p className="text-xs text-muted-foreground">
-              Cuotas que quedaron sin pagar de meses anteriores. Se suman al monto pendiente y a
-              la meta diaria; &quot;Nuevo pago&quot; las descuenta primero.
-            </p>
-          </div>
+          <p className="-mt-2 text-xs text-muted-foreground">
+            Las atrasadas se suman al monto pendiente y se pagan primero.
+          </p>
 
           {state?.error && (
             <p role="alert" className="text-sm text-destructive">

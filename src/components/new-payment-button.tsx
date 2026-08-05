@@ -35,11 +35,7 @@ export function NewPaymentButton({
       onClick={handleClick}
       disabled={pending}
     >
-      {pending
-        ? "Guardando..."
-        : catchingUp
-          ? `Pagar cuota atrasada (${installmentsOverdue})`
-          : "Nuevo pago"}
+      {pending ? "Guardando..." : catchingUp ? "Pagar cuota atrasada" : "Nuevo pago"}
     </Button>
   );
 }

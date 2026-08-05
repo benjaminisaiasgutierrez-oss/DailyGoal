@@ -4,12 +4,12 @@ import { Calendar, Settings } from "lucide-react";
 import { getCurrentUser } from "@/application/auth/get-session";
 import { getDebts } from "@/application/debts/manage-debts";
 import { getUberLogsInRange, getUserSettings } from "@/application/uber/manage-uber";
-import { getIncomes, getIncomesInRange } from "@/application/incomes/manage-incomes";
+import { getIncomesInRange } from "@/application/incomes/manage-incomes";
+import { getSavingsGoals } from "@/application/savings/manage-savings";
 import {
   calculateDailyGoal,
   calculateMonthlyTotal,
   calculateRemainingBalance,
-  calculateSavedAmount,
   resolveWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
@@ -38,13 +38,13 @@ function currentMonthRange() {
 export default async function HomePage() {
   const { year, month, first, last, today } = currentMonthRange();
 
-  const [user, debts, settings, logsThisMonth, incomesThisMonth, allIncomes] = await Promise.all([
+  const [user, debts, settings, logsThisMonth, incomesThisMonth, savingsGoals] = await Promise.all([
     getCurrentUser(),
     getDebts(),
     getUserSettings(),
     getUberLogsInRange(first, last),
     getIncomesInRange(first, last),
-    getIncomes(500),
+    getSavingsGoals(),
   ]);
 
   const uberModeEnabled = settings.uberModeEnabled;
@@ -77,16 +77,14 @@ export default async function HomePage() {
   const upcoming = [...activeDebts].sort((a, b) => a.dueDay - b.dueDay).slice(0, 5);
   const monthProgress = monthlyTotal > 0 ? Math.min((earnedThisMonth / monthlyTotal) * 100, 100) : 0;
 
-  const savedAmount = calculateSavedAmount(debts, allIncomes);
-  const savingsGoal = settings.savingsGoalAmount;
-  const savingsProgress = savingsGoal ? Math.min((savedAmount / savingsGoal) * 100, 100) : 0;
+  const totalSaved = savingsGoals.reduce((sum, goal) => sum + goal.savedAmount, 0);
 
   return (
     <div className="flex flex-col gap-5 px-4 py-6 pb-24">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">
-            Hola{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
+            Hola{user?.name ? `, ${user.name}` : ""}
           </h1>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
@@ -127,10 +125,15 @@ export default async function HomePage() {
             <span className="font-medium">{formatCLP(earnedThisMonth)}</span>
           </div>
           {uberModeEnabled && incomeThisMonth > 0 && (
-            <div className="flex items-center justify-between pl-3 text-xs text-muted-foreground">
-              <span>
-                Uber {formatCLP(uberEarnedThisMonth)} + Ingresos {formatCLP(incomeThisMonth)}
-              </span>
+            <div className="flex flex-col gap-1 pl-3 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>Uber</span>
+                <span>{formatCLP(uberEarnedThisMonth)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Ingresos</span>
+                <span>{formatCLP(incomeThisMonth)}</span>
+              </div>
             </div>
           )}
           <div className="flex items-center justify-between text-sm">
@@ -152,27 +155,17 @@ export default async function HomePage() {
           <CardHeader>
             <CardTitle className="text-base">Ahorro</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {savingsGoal ? (
-              <>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Ahorrado</span>
-                  <span className="font-medium">{formatCLP(savedAmount)}</span>
-                </div>
-                <Progress value={savingsProgress} />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Meta {formatCLP(savingsGoal)}</span>
-                  <span>Faltan {formatCLP(Math.max(savingsGoal - savedAmount, 0))}</span>
-                </div>
-                {settings.savingsGoalTargetDate && (
-                  <span className="text-xs text-muted-foreground">
-                    Objetivo: {settings.savingsGoalTargetDate}
-                  </span>
-                )}
-              </>
+          <CardContent>
+            {savingsGoals.length > 0 ? (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {savingsGoals.length} meta{savingsGoals.length === 1 ? "" : "s"}
+                </span>
+                <span className="font-medium">{formatCLP(totalSaved)}</span>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Todavía ahorraste {formatCLP(savedAmount)}. Toca para definir una meta.
+                Todavía no tienes metas de ahorro. Toca para crear una.
               </p>
             )}
           </CardContent>

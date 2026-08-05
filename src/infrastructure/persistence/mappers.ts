@@ -2,6 +2,7 @@ import type { Debt, DebtPayment, DebtType } from "@/domain/entities/debt";
 import type { UberLog } from "@/domain/entities/uber-log";
 import type { UserSettings, WorkDaysMode } from "@/domain/entities/user-settings";
 import type { Income, IncomeType } from "@/domain/entities/income";
+import type { SavingsGoal } from "@/domain/entities/savings-goal";
 
 type DebtRow = {
   id: string;
@@ -46,9 +47,17 @@ type UserSettingsRow = {
   work_days_mode: WorkDaysMode;
   work_days_per_month: number | null;
   uber_mode_enabled: boolean;
-  savings_goal_amount: number | null;
-  savings_goal_target_date: string | null;
   updated_at: string;
+};
+
+type SavingsGoalRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  target_amount: number | null;
+  target_date: string | null;
+  saved_amount: number;
+  created_at: string;
 };
 
 export function mapDebt(row: DebtRow): Debt {
@@ -101,9 +110,19 @@ export function mapUserSettings(row: UserSettingsRow): UserSettings {
     workDaysMode: row.work_days_mode,
     workDaysPerMonth: row.work_days_per_month,
     uberModeEnabled: row.uber_mode_enabled,
-    savingsGoalAmount: row.savings_goal_amount !== null ? Number(row.savings_goal_amount) : null,
-    savingsGoalTargetDate: row.savings_goal_target_date,
     updatedAt: row.updated_at,
+  };
+}
+
+export function mapSavingsGoal(row: SavingsGoalRow): SavingsGoal {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    targetAmount: row.target_amount !== null ? Number(row.target_amount) : null,
+    targetDate: row.target_date,
+    savedAmount: Number(row.saved_amount),
+    createdAt: row.created_at,
   };
 }
 

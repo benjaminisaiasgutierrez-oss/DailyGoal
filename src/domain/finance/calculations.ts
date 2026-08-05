@@ -1,5 +1,4 @@
 import type { Debt } from "@/domain/entities/debt";
-import type { Income } from "@/domain/entities/income";
 import type { UserSettings } from "@/domain/entities/user-settings";
 
 // No cuenta como "terminado" si todavía quedan cuotas atrasadas declaradas,
@@ -74,17 +73,4 @@ export function isDebtOverdue(
 ): boolean {
   if (debt.installmentsOverdue > 0) return true;
   return isDebtOwingThisMonth(debt) && todayDayOfMonth > debt.dueDay && !paidThisMonth;
-}
-
-// Suma lo pagado en gastos categoría "ahorro" (cuotas ya pagadas) más los
-// ingresos categoría "ahorro" — reutiliza datos ya registrados en vez de
-// pedir un registro aparte.
-export function calculateSavedAmount(debts: Debt[], incomes: Income[]): number {
-  const fromDebts = debts
-    .filter((debt) => debt.type === "ahorro")
-    .reduce((sum, debt) => sum + debt.amount * debt.installmentsPaid, 0);
-  const fromIncomes = incomes
-    .filter((income) => income.type === "ahorro")
-    .reduce((sum, income) => sum + income.amount, 0);
-  return fromDebts + fromIncomes;
 }

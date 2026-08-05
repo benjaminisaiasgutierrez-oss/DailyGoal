@@ -10,8 +10,6 @@ export type UserSettings = {
   workDaysMode: WorkDaysMode;
   workDaysPerMonth: number | null;
   uberModeEnabled: boolean;
-  savingsGoalAmount: number | null;
-  savingsGoalTargetDate: string | null;
   updatedAt: string;
 };
 
