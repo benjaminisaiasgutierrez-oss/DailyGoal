@@ -27,6 +27,9 @@ create type debt_type as enum (
 
 -- Deudas / gastos. total_installments = null significa "recurrente indefinido"
 -- (ej. un plan o suscripción), en vez de un crédito/préstamo con fin fijo.
+-- installments_overdue: cuotas atrasadas declaradas a mano por el usuario,
+-- aparte del conteo normal de installments_paid. Suma al monto pendiente y
+-- a la meta diaria; "Nuevo pago" la descuenta primero cuando es > 0.
 create table debts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -36,6 +39,7 @@ create table debts (
   due_day smallint not null check (due_day between 1 and 31),
   total_installments integer check (total_installments is null or total_installments > 0),
   installments_paid integer not null default 0 check (installments_paid >= 0),
+  installments_overdue smallint not null default 0 check (installments_overdue >= 0),
   active boolean not null default true,
   created_at timestamptz not null default now()
 );

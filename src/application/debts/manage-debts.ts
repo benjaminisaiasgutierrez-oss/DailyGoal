@@ -63,6 +63,7 @@ function parseDebtForm(formData: FormData):
         dueDay: number;
         totalInstallments: number | null;
         installmentsPaid: number;
+        installmentsOverdue: number;
       };
     }
   | { ok: false; error: string } {
@@ -74,6 +75,8 @@ function parseDebtForm(formData: FormData):
   const totalInstallments = totalInstallmentsRaw ? Number(totalInstallmentsRaw) : null;
   const installmentsPaidRaw = String(formData.get("installmentsPaid") ?? "").trim();
   const installmentsPaid = installmentsPaidRaw ? Number(installmentsPaidRaw) : 0;
+  const installmentsOverdueRaw = String(formData.get("installmentsOverdue") ?? "").trim();
+  const installmentsOverdue = installmentsOverdueRaw ? Number(installmentsOverdueRaw) : 0;
 
   if (!name) return { ok: false, error: "Ingresa un nombre." };
   if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Ingresa un monto válido." };
@@ -89,8 +92,14 @@ function parseDebtForm(formData: FormData):
   if (totalInstallments !== null && installmentsPaid > totalInstallments) {
     return { ok: false, error: "Las cuotas pagadas no pueden ser más que el total de cuotas." };
   }
+  if (!Number.isInteger(installmentsOverdue) || installmentsOverdue < 0) {
+    return { ok: false, error: "Las cuotas atrasadas deben ser un número de 0 o más." };
+  }
 
-  return { ok: true, value: { name, type, amount, dueDay, totalInstallments, installmentsPaid } };
+  return {
+    ok: true,
+    value: { name, type, amount, dueDay, totalInstallments, installmentsPaid, installmentsOverdue },
+  };
 }
 
 export async function createDebt(_prev: DebtFormState, formData: FormData): Promise<DebtFormState> {
@@ -107,6 +116,7 @@ export async function createDebt(_prev: DebtFormState, formData: FormData): Prom
     due_day: parsed.value.dueDay,
     total_installments: parsed.value.totalInstallments,
     installments_paid: parsed.value.installmentsPaid,
+    installments_overdue: parsed.value.installmentsOverdue,
   });
 
   if (error) return { error: "No se pudo guardar el gasto." };
@@ -134,6 +144,7 @@ export async function updateDebt(_prev: DebtFormState, formData: FormData): Prom
       due_day: parsed.value.dueDay,
       total_installments: parsed.value.totalInstallments,
       installments_paid: parsed.value.installmentsPaid,
+      installments_overdue: parsed.value.installmentsOverdue,
     })
     .eq("id", id)
     .eq("user_id", userId);
@@ -168,12 +179,43 @@ export async function addPayment(debtId: string): Promise<{ error?: string }> {
 
   const { data: debt, error: debtError } = await supabase
     .from("debts")
-    .select("installments_paid, total_installments, amount")
+    .select("installments_paid, total_installments, installments_overdue, amount")
     .eq("id", debtId)
     .eq("user_id", userId)
     .single();
 
   if (debtError || !debt) return { error: "Gasto no encontrado." };
+
+  // Si hay cuotas atrasadas declaradas, el pago las descuenta primero
+  // (y sigue sumando al conteo normal de cuotas pagadas).
+  if (debt.installments_overdue > 0) {
+    const nextInstallment = debt.installments_paid + 1;
+    const stillFinished =
+      debt.total_installments !== null && nextInstallment > debt.total_installments;
+
+    const { error: paymentError } = await supabase.from("debt_payments").insert({
+      debt_id: debtId,
+      installment_number: nextInstallment,
+      amount: debt.amount,
+    });
+    if (paymentError) return { error: "No se pudo registrar el pago." };
+
+    const { error: updateError } = await supabase
+      .from("debts")
+      .update({
+        installments_overdue: debt.installments_overdue - 1,
+        installments_paid: stillFinished ? debt.installments_paid : nextInstallment,
+      })
+      .eq("id", debtId)
+      .eq("user_id", userId);
+    if (updateError) return { error: "El pago quedó registrado pero no se pudo actualizar el conteo." };
+
+    revalidatePath("/gastos");
+    revalidatePath("/");
+    revalidatePath("/ahorro");
+    return {};
+  }
+
   if (debt.total_installments !== null && debt.installments_paid >= debt.total_installments) {
     return { error: "Este gasto ya está pagado por completo." };
   }
@@ -196,5 +238,6 @@ export async function addPayment(debtId: string): Promise<{ error?: string }> {
 
   revalidatePath("/gastos");
   revalidatePath("/");
+  revalidatePath("/ahorro");
   return {};
 }

@@ -32,7 +32,9 @@ export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: 
               </Badge>
               {isOverdue && (
                 <Badge variant="destructive" className="w-fit">
-                  Atrasado
+                  {debt.installmentsOverdue > 0
+                    ? `Atrasado · ${debt.installmentsOverdue} cuota${debt.installmentsOverdue === 1 ? "" : "s"}`
+                    : "Atrasado"}
                 </Badge>
               )}
             </div>
@@ -77,7 +79,9 @@ export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: 
           <p className="text-xs text-muted-foreground">Recurrente indefinido</p>
         )}
 
-        {!finished && <NewPaymentButton debtId={debt.id} />}
+        {!finished && (
+          <NewPaymentButton debtId={debt.id} installmentsOverdue={debt.installmentsOverdue} />
+        )}
         {finished && <p className="text-center text-xs text-muted-foreground">Pagado por completo</p>}
       </CardContent>
     </Card>

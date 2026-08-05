@@ -27,10 +27,10 @@ export default async function GastosPage() {
 
   for (const debt of owing) {
     const isPaid = paidThisMonthIds.has(debt.id);
-    if (isPaid) {
-      paidThisMonth.push(debt);
-    } else if (isDebtOverdue(debt, isPaid, todayDayOfMonth)) {
+    if (isDebtOverdue(debt, isPaid, todayDayOfMonth)) {
       overdue.push(debt);
+    } else if (isPaid) {
+      paidThisMonth.push(debt);
     } else {
       pending.push(debt);
     }

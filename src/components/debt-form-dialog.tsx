@@ -142,6 +142,21 @@ export function DebtFormDialog({ debt }: { debt?: Debt }) {
             </div>
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="installmentsOverdue">Cuotas atrasadas</Label>
+            <Input
+              id="installmentsOverdue"
+              name="installmentsOverdue"
+              type="number"
+              min="0"
+              defaultValue={debt?.installmentsOverdue ?? 0}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cuotas que quedaron sin pagar de meses anteriores. Se suman al monto pendiente y a
+              la meta diaria; &quot;Nuevo pago&quot; las descuenta primero.
+            </p>
+          </div>
+
           {state?.error && (
             <p role="alert" className="text-sm text-destructive">
               {state.error}

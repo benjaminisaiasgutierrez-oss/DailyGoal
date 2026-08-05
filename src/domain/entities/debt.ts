@@ -47,6 +47,7 @@ export type Debt = {
   dueDay: number;
   totalInstallments: number | null;
   installmentsPaid: number;
+  installmentsOverdue: number;
   active: boolean;
   createdAt: string;
 };

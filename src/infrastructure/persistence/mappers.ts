@@ -12,6 +12,7 @@ type DebtRow = {
   due_day: number;
   total_installments: number | null;
   installments_paid: number;
+  installments_overdue: number;
   active: boolean;
   created_at: string;
 };
@@ -60,6 +61,7 @@ export function mapDebt(row: DebtRow): Debt {
     dueDay: row.due_day,
     totalInstallments: row.total_installments,
     installmentsPaid: row.installments_paid,
+    installmentsOverdue: row.installments_overdue,
     active: row.active,
     createdAt: row.created_at,
   };

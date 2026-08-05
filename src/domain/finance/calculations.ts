@@ -2,27 +2,38 @@ import type { Debt } from "@/domain/entities/debt";
 import type { Income } from "@/domain/entities/income";
 import type { UserSettings } from "@/domain/entities/user-settings";
 
+// No cuenta como "terminado" si todavía quedan cuotas atrasadas declaradas,
+// aunque el conteo normal de cuotas ya haya llegado al total.
 export function isDebtFinished(
-  debt: Pick<Debt, "totalInstallments" | "installmentsPaid">
+  debt: Pick<Debt, "totalInstallments" | "installmentsPaid" | "installmentsOverdue">
 ): boolean {
-  return debt.totalInstallments !== null && debt.installmentsPaid >= debt.totalInstallments;
+  return (
+    debt.totalInstallments !== null &&
+    debt.installmentsPaid >= debt.totalInstallments &&
+    debt.installmentsOverdue === 0
+  );
 }
 
 export function isDebtOwingThisMonth(
-  debt: Pick<Debt, "active" | "totalInstallments" | "installmentsPaid">
+  debt: Pick<Debt, "active" | "totalInstallments" | "installmentsPaid" | "installmentsOverdue">
 ): boolean {
   return debt.active && !isDebtFinished(debt);
 }
 
 export function calculateMonthlyTotal(debts: Debt[]): number {
-  return debts.filter(isDebtOwingThisMonth).reduce((sum, debt) => sum + debt.amount, 0);
+  return debts
+    .filter(isDebtOwingThisMonth)
+    .reduce((sum, debt) => sum + debt.amount * (1 + debt.installmentsOverdue), 0);
 }
 
 export function calculateRemainingBalance(
-  debt: Pick<Debt, "totalInstallments" | "installmentsPaid" | "amount">
+  debt: Pick<Debt, "totalInstallments" | "installmentsPaid" | "amount" | "installmentsOverdue">
 ): number | null {
-  if (debt.totalInstallments === null) return null;
-  return Math.max(debt.totalInstallments - debt.installmentsPaid, 0) * debt.amount;
+  const overdueAmount = debt.installmentsOverdue * debt.amount;
+  if (debt.totalInstallments === null) {
+    return overdueAmount > 0 ? overdueAmount : null;
+  }
+  return Math.max(debt.totalInstallments - debt.installmentsPaid, 0) * debt.amount + overdueAmount;
 }
 
 export function getWorkingDaysInMonth(year: number, month: number, workDays: number[]): number {
@@ -51,13 +62,17 @@ export function calculateDailyGoal(monthlyTotal: number, workingDaysInMonth: num
   return monthlyTotal / workingDaysInMonth;
 }
 
-// Atrasado: ya pasó el día de pago de este mes y no hay ningún pago
-// registrado en lo que va del mes para este gasto.
+// Atrasado: o bien el usuario declaró cuotas atrasadas a mano, o ya pasó el
+// día de pago de este mes y no hay ningún pago registrado en lo que va del mes.
 export function isDebtOverdue(
-  debt: Pick<Debt, "active" | "totalInstallments" | "installmentsPaid" | "dueDay">,
+  debt: Pick<
+    Debt,
+    "active" | "totalInstallments" | "installmentsPaid" | "dueDay" | "installmentsOverdue"
+  >,
   paidThisMonth: boolean,
   todayDayOfMonth: number
 ): boolean {
+  if (debt.installmentsOverdue > 0) return true;
   return isDebtOwingThisMonth(debt) && todayDayOfMonth > debt.dueDay && !paidThisMonth;
 }
 
