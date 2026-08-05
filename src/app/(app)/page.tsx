@@ -13,6 +13,7 @@ import {
   resolveWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
+import { calculateTotalEarnings } from "@/domain/uber/calculations";
 import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
 import { formatCLP } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,10 @@ export default async function HomePage() {
   const workingDays = resolveWorkingDaysInMonth(settings, year, month);
   const dailyGoal = calculateDailyGoal(monthlyTotal, workingDays);
 
-  const uberEarnedThisMonth = logsThisMonth.reduce((sum, log) => sum + log.earnings, 0);
+  const uberEarnedThisMonth = logsThisMonth.reduce(
+    (sum, log) => sum + calculateTotalEarnings(log),
+    0
+  );
   const incomeThisMonth = incomesThisMonth.reduce((sum, income) => sum + income.amount, 0);
   const earnedThisMonth = uberEarnedThisMonth + incomeThisMonth;
 
@@ -64,7 +68,7 @@ export default async function HomePage() {
       income.isRecurring ? income.paymentDay === todayDayOfMonth : income.incomeDate === today
     )
     .reduce((sum, income) => sum + income.amount, 0);
-  const earnedToday = (todayLog?.earnings ?? 0) + incomeToday;
+  const earnedToday = (todayLog ? calculateTotalEarnings(todayLog) : 0) + incomeToday;
   const fuelCostToday = todayLog?.fuelCost ?? 0;
   const totalToEarnToday = dailyGoal + fuelCostToday;
   const net = earnedThisMonth - monthlyTotal;

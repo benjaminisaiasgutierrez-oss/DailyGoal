@@ -10,6 +10,8 @@ export type UserSettings = {
   workDaysMode: WorkDaysMode;
   workDaysPerMonth: number | null;
   uberModeEnabled: boolean;
+  maintenanceIntervalKm: number | null;
+  lastMaintenanceDate: string | null;
   updatedAt: string;
 };
 

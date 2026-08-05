@@ -118,6 +118,19 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
             </div>
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="maintenanceIntervalKm">Mantención cada (km)</Label>
+            <Input
+              id="maintenanceIntervalKm"
+              name="maintenanceIntervalKm"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={settings.maintenanceIntervalKm ?? ""}
+              placeholder="Ej: 5000 (opcional)"
+            />
+          </div>
+
           {state?.error && (
             <p role="alert" className="text-sm text-destructive">
               {state.error}

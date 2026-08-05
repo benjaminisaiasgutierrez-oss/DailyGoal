@@ -3,11 +3,26 @@
 import { useActionState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { saveLog, type UberFormState } from "@/application/uber/manage-uber";
-import type { UberLog } from "@/domain/entities/uber-log";
+import {
+  FUEL_TYPES,
+  FUEL_TYPE_LABELS,
+  RIDESHARE_PLATFORMS,
+  RIDESHARE_PLATFORM_LABELS,
+  type FuelType,
+  type UberLog,
+} from "@/domain/entities/uber-log";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -115,6 +130,67 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
             defaultValue={log?.fuelCost ?? ""}
             required
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="fuelType">Tipo de bencina</Label>
+          <Select name="fuelType" defaultValue={log?.fuelType ?? "93"}>
+            <SelectTrigger id="fuelType" className="w-full">
+              <SelectValue>
+                {(value: FuelType) => FUEL_TYPE_LABELS[value] ?? "Selecciona"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {FUEL_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {FUEL_TYPE_LABELS[type]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="tips">Propinas</Label>
+          <Input
+            id="tips"
+            name="tips"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={log?.tips ?? ""}
+            placeholder="Opcional"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="tripCount">Número de viajes</Label>
+        <Input
+          id="tripCount"
+          name="tripCount"
+          type="number"
+          min="0"
+          step="1"
+          defaultValue={log?.tripCount ?? ""}
+          placeholder="Opcional"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label>Plataformas</Label>
+        <div className="flex flex-wrap gap-3">
+          {RIDESHARE_PLATFORMS.map((platform) => (
+            <label key={platform} className="flex items-center gap-1.5 text-sm">
+              <Checkbox
+                name="platforms"
+                value={platform}
+                defaultChecked={log?.platforms?.includes(platform)}
+              />
+              {RIDESHARE_PLATFORM_LABELS[platform]}
+            </label>
+          ))}
         </div>
       </div>
 

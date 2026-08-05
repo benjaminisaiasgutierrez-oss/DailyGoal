@@ -57,9 +57,15 @@ create table debt_payments (
 
 create index debt_payments_debt_id_idx on debt_payments (debt_id);
 
+create type fuel_type as enum ('93', '95', '97', 'diesel', 'otro');
+
+create type rideshare_platform as enum ('uber', 'didi', 'cabify', 'indriver', 'otro');
+
 -- Registro diario de actividad como conductor.
 -- fuel_cost queda nullable a nivel de base (para no romper filas viejas),
--- pero la app lo exige siempre al guardar un registro nuevo.
+-- pero la app lo exige siempre al guardar un registro nuevo. platforms es
+-- un arreglo (puede trabajar con más de una app el mismo día) en vez de
+-- una fila separada por plataforma, para no romper la unicidad por día.
 create table uber_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -68,6 +74,10 @@ create table uber_logs (
   earnings numeric(12, 2) not null default 0 check (earnings >= 0),
   fuel_liters numeric(8, 2) check (fuel_liters is null or fuel_liters >= 0),
   fuel_cost numeric(12, 2) check (fuel_cost is null or fuel_cost >= 0),
+  fuel_type fuel_type,
+  trip_count smallint check (trip_count is null or trip_count >= 0),
+  tips numeric(12, 2) check (tips is null or tips >= 0),
+  platforms rideshare_platform[] not null default '{}',
   start_time time,
   end_time time,
   created_at timestamptz not null default now(),
@@ -78,6 +88,9 @@ create index uber_logs_user_id_idx on uber_logs (user_id);
 
 -- Configuración por usuario. work_days: 0 = domingo ... 6 = sábado.
 -- work_days_mode: 'weekdays' usa work_days; 'fixed_count' usa work_days_per_month.
+-- Mantención: km_since_maintenance se calcula sumando uber_logs desde
+-- last_maintenance_date (no es un contador propio), así que un registro
+-- editado o borrado no lo desincroniza.
 create table user_settings (
   user_id uuid primary key references auth.users (id) on delete cascade,
   fuel_price_per_liter numeric(10, 2) not null default 0,
@@ -91,6 +104,11 @@ create table user_settings (
     )
   ),
   uber_mode_enabled boolean not null default true,
+  maintenance_interval_km numeric(10, 2) check (
+    maintenance_interval_km is null
+    or maintenance_interval_km > 0
+  ),
+  last_maintenance_date date,
   updated_at timestamptz not null default now()
 );
 
