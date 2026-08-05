@@ -1,6 +1,8 @@
 .gl-root {
   min-height: 100dvh;
-  background: #000;
+  background:
+    radial-gradient(ellipse 700px 500px at 50% 32%, rgba(133, 187, 101, 0.1), transparent 70%),
+    #000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -23,7 +25,9 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: #000;
+  background:
+    radial-gradient(ellipse 700px 500px at 50% 45%, rgba(133, 187, 101, 0.1), transparent 70%),
+    #000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -87,7 +91,7 @@
 }
 .gl-sp-w1 {
   display: inline-block;
-  color: #c6ff00;
+  color: #85bb65;
   animation: gl-dropBounce 0.85s 0.1s cubic-bezier(0.215, 0.61, 0.355, 1) both;
 }
 .gl-sp-w2 {
@@ -98,7 +102,7 @@
 .gl-sp-bar {
   width: 160px;
   height: 2px;
-  background: rgba(198, 255, 0, 0.12);
+  background: rgba(133, 187, 101, 0.15);
   border-radius: 99px;
   overflow: hidden;
   position: relative;
@@ -111,9 +115,9 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(198, 255, 0, 0.2) 20%,
-    rgba(198, 255, 0, 0.9) 50%,
-    rgba(198, 255, 0, 0.2) 80%,
+    rgba(133, 187, 101, 0.25) 20%,
+    rgba(133, 187, 101, 0.95) 50%,
+    rgba(133, 187, 101, 0.25) 80%,
     transparent 100%
   );
   animation: gl-shimmerW 1.5s 0.95s ease infinite;
@@ -121,14 +125,44 @@
 }
 
 /* ─── LOGIN ─── */
+@keyframes gl-fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .gl-login {
   width: 400px;
   max-width: 92vw;
-  opacity: 0;
-  transition: opacity 0.5s ease;
 }
-.gl-login.show {
-  opacity: 1;
+
+.gl-login .gl-brand,
+.gl-login .gl-heading,
+.gl-login .gl-subheading,
+.gl-login .gl-error-box,
+.gl-login .gl-btn-google {
+  opacity: 0;
+}
+
+.gl-login.show .gl-brand {
+  animation: gl-fadeUp 0.5s 0s ease both;
+}
+.gl-login.show .gl-heading {
+  animation: gl-fadeUp 0.5s 0.08s ease both;
+}
+.gl-login.show .gl-subheading {
+  animation: gl-fadeUp 0.5s 0.16s ease both;
+}
+.gl-login.show .gl-error-box {
+  animation: gl-fadeUp 0.4s ease both;
+}
+.gl-login.show .gl-btn-google {
+  animation: gl-fadeUp 0.5s 0.24s ease both;
 }
 
 .gl-brand {
@@ -144,7 +178,7 @@
   align-items: baseline;
 }
 .gl-brand-logo .gl-l1 {
-  color: #c6ff00;
+  color: #85bb65;
 }
 .gl-brand-logo .gl-l2 {
   color: #fff;
@@ -179,19 +213,20 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: #fff;
-  color: #1f1f1f;
-  border: none;
+  background: #131314;
+  color: #e3e3e3;
+  border: 1px solid #8e918f;
   border-radius: 10px;
   padding: 12px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 .gl-btn-google:hover {
-  opacity: 0.9;
+  background: #1f2020;
+  border-color: #a8abaa;
 }
 .gl-btn-google:disabled {
   opacity: 0.6;
