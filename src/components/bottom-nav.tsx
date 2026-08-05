@@ -5,20 +5,22 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, TrendingUp, Wallet, Car } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ITEMS = [
+const BASE_ITEMS = [
   { href: "/", label: "Resumen", icon: LayoutDashboard },
   { href: "/ingresos", label: "Ingresos", icon: TrendingUp },
   { href: "/gastos", label: "Gastos", icon: Wallet },
-  { href: "/uber", label: "Uber", icon: Car },
 ];
 
-export function BottomNav() {
+const UBER_ITEM = { href: "/uber", label: "Uber", icon: Car };
+
+export function BottomNav({ uberModeEnabled = true }: { uberModeEnabled?: boolean }) {
   const pathname = usePathname();
+  const items = uberModeEnabled ? [...BASE_ITEMS, UBER_ITEM] : BASE_ITEMS;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
-        {ITEMS.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
             <Link

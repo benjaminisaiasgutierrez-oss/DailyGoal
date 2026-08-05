@@ -1,4 +1,5 @@
 import type { Debt } from "@/domain/entities/debt";
+import type { Income } from "@/domain/entities/income";
 
 export function isDebtFinished(
   debt: Pick<Debt, "totalInstallments" | "installmentsPaid">
@@ -36,4 +37,27 @@ export function getWorkingDaysInMonth(year: number, month: number, workDays: num
 export function calculateDailyGoal(monthlyTotal: number, workingDaysInMonth: number): number {
   if (workingDaysInMonth <= 0) return 0;
   return monthlyTotal / workingDaysInMonth;
+}
+
+// Atrasado: ya pasó el día de pago de este mes y no hay ningún pago
+// registrado en lo que va del mes para este gasto.
+export function isDebtOverdue(
+  debt: Pick<Debt, "active" | "totalInstallments" | "installmentsPaid" | "dueDay">,
+  paidThisMonth: boolean,
+  todayDayOfMonth: number
+): boolean {
+  return isDebtOwingThisMonth(debt) && todayDayOfMonth > debt.dueDay && !paidThisMonth;
+}
+
+// Suma lo pagado en gastos categoría "ahorro" (cuotas ya pagadas) más los
+// ingresos categoría "ahorro" — reutiliza datos ya registrados en vez de
+// pedir un registro aparte.
+export function calculateSavedAmount(debts: Debt[], incomes: Income[]): number {
+  const fromDebts = debts
+    .filter((debt) => debt.type === "ahorro")
+    .reduce((sum, debt) => sum + debt.amount * debt.installmentsPaid, 0);
+  const fromIncomes = incomes
+    .filter((income) => income.type === "ahorro")
+    .reduce((sum, income) => sum + income.amount, 0);
+  return fromDebts + fromIncomes;
 }

@@ -19,6 +19,25 @@ export async function getDebts(): Promise<Debt[]> {
   return (data ?? []).map(mapDebt);
 }
 
+// IDs de gastos que ya tienen al menos un pago registrado este mes —
+// se usa para marcar cuáles quedaron "Atrasados".
+export async function getDebtIdsPaidThisMonth(): Promise<Set<string>> {
+  const { userId } = await verifySession();
+  const supabase = await createClient();
+
+  const now = new Date();
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("debt_payments")
+    .select("debt_id, debts!inner(user_id)")
+    .eq("debts.user_id", userId)
+    .gte("paid_at", firstOfMonth);
+
+  if (error) throw new Error("No se pudo revisar el estado de los pagos.");
+  return new Set((data ?? []).map((row) => row.debt_id as string));
+}
+
 export async function getDebtPayments(debtId: string): Promise<DebtPayment[]> {
   await verifySession();
   const supabase = await createClient();

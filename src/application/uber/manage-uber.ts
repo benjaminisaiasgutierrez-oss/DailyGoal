@@ -52,6 +52,9 @@ export async function getUserSettings(): Promise<UserSettings> {
       fuelPricePerLiter: 0,
       kmPerLiter: 0,
       workDays: DEFAULT_WORK_DAYS,
+      uberModeEnabled: true,
+      savingsGoalAmount: null,
+      savingsGoalTargetDate: null,
       updatedAt: new Date().toISOString(),
     };
   }

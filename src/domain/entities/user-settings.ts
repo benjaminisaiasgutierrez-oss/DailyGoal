@@ -3,6 +3,9 @@ export type UserSettings = {
   fuelPricePerLiter: number;
   kmPerLiter: number;
   workDays: number[];
+  uberModeEnabled: boolean;
+  savingsGoalAmount: number | null;
+  savingsGoalTargetDate: string | null;
   updatedAt: string;
 };
 

@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Calendar, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Settings } from "lucide-react";
 import { getCurrentUser } from "@/application/auth/get-session";
-import { logout } from "@/application/auth/authenticate-user";
 import { getDebts } from "@/application/debts/manage-debts";
 import { getUberLogsInRange, getUserSettings } from "@/application/uber/manage-uber";
-import { getIncomesInRange } from "@/application/incomes/manage-incomes";
+import { getIncomes, getIncomesInRange } from "@/application/incomes/manage-incomes";
 import {
   calculateDailyGoal,
   calculateMonthlyTotal,
   calculateRemainingBalance,
+  calculateSavedAmount,
   getWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
@@ -16,8 +17,9 @@ import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
 import { formatCLP } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Resumen",
@@ -36,13 +38,16 @@ function currentMonthRange() {
 export default async function HomePage() {
   const { year, month, first, last, today } = currentMonthRange();
 
-  const [user, debts, settings, logsThisMonth, incomesThisMonth] = await Promise.all([
+  const [user, debts, settings, logsThisMonth, incomesThisMonth, allIncomes] = await Promise.all([
     getCurrentUser(),
     getDebts(),
     getUserSettings(),
     getUberLogsInRange(first, last),
     getIncomesInRange(first, last),
+    getIncomes(500),
   ]);
+
+  const uberModeEnabled = settings.uberModeEnabled;
 
   const monthlyTotal = calculateMonthlyTotal(debts);
   const workingDays = getWorkingDaysInMonth(year, month, settings.workDays);
@@ -72,6 +77,10 @@ export default async function HomePage() {
   const upcoming = [...activeDebts].sort((a, b) => a.dueDay - b.dueDay).slice(0, 5);
   const monthProgress = monthlyTotal > 0 ? Math.min((earnedThisMonth / monthlyTotal) * 100, 100) : 0;
 
+  const savedAmount = calculateSavedAmount(debts, allIncomes);
+  const savingsGoal = settings.savingsGoalAmount;
+  const savingsProgress = savingsGoal ? Math.min((savedAmount / savingsGoal) * 100, 100) : 0;
+
   return (
     <div className="flex flex-col gap-5 px-4 py-6 pb-24">
       <div className="flex items-center justify-between">
@@ -81,11 +90,13 @@ export default async function HomePage() {
           </h1>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
-        <form action={logout}>
-          <Button type="submit" variant="ghost" size="icon-sm" aria-label="Cerrar sesión">
-            <LogOut className="size-4" />
-          </Button>
-        </form>
+        <Link
+          href="/ajustes"
+          aria-label="Ajustes"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
+        >
+          <Settings className="size-4" />
+        </Link>
       </div>
 
       <Card>
@@ -93,7 +104,7 @@ export default async function HomePage() {
           <span className="text-sm text-muted-foreground">Meta diaria</span>
           <span className="text-3xl font-semibold tracking-tight">{formatCLP(dailyGoal)}</span>
 
-          {fuelCostToday > 0 && (
+          {uberModeEnabled && fuelCostToday > 0 && (
             <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-3 py-2 text-xs">
               <span className="text-muted-foreground">
                 Meta {formatCLP(dailyGoal)} + Bencina de hoy {formatCLP(fuelCostToday)}
@@ -115,9 +126,11 @@ export default async function HomePage() {
             <span className="text-muted-foreground">Ganado</span>
             <span className="font-medium">{formatCLP(earnedThisMonth)}</span>
           </div>
-          {incomeThisMonth > 0 && (
+          {uberModeEnabled && incomeThisMonth > 0 && (
             <div className="flex items-center justify-between pl-3 text-xs text-muted-foreground">
-              <span>Uber {formatCLP(uberEarnedThisMonth)} + Ingresos {formatCLP(incomeThisMonth)}</span>
+              <span>
+                Uber {formatCLP(uberEarnedThisMonth)} + Ingresos {formatCLP(incomeThisMonth)}
+              </span>
             </div>
           )}
           <div className="flex items-center justify-between text-sm">
@@ -131,6 +144,40 @@ export default async function HomePage() {
               {formatCLP(net)}
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Ahorro</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {savingsGoal ? (
+            <>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Ahorrado</span>
+                <span className="font-medium">{formatCLP(savedAmount)}</span>
+              </div>
+              <Progress value={savingsProgress} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Meta {formatCLP(savingsGoal)}</span>
+                <span>Faltan {formatCLP(Math.max(savingsGoal - savedAmount, 0))}</span>
+              </div>
+              {settings.savingsGoalTargetDate && (
+                <span className="text-xs text-muted-foreground">
+                  Objetivo: {settings.savingsGoalTargetDate}
+                </span>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Todavía ahorraste {formatCLP(savedAmount)}. Define una meta en{" "}
+              <Link href="/ajustes" className="underline">
+                Ajustes
+              </Link>{" "}
+              para ver tu avance.
+            </p>
+          )}
         </CardContent>
       </Card>
 

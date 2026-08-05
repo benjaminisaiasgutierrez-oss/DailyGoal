@@ -40,6 +40,9 @@ type UserSettingsRow = {
   fuel_price_per_liter: number;
   km_per_liter: number;
   work_days: number[];
+  uber_mode_enabled: boolean;
+  savings_goal_amount: number | null;
+  savings_goal_target_date: string | null;
   updated_at: string;
 };
 
@@ -87,6 +90,9 @@ export function mapUserSettings(row: UserSettingsRow): UserSettings {
     fuelPricePerLiter: Number(row.fuel_price_per_liter),
     kmPerLiter: Number(row.km_per_liter),
     workDays: row.work_days,
+    uberModeEnabled: row.uber_mode_enabled,
+    savingsGoalAmount: row.savings_goal_amount !== null ? Number(row.savings_goal_amount) : null,
+    savingsGoalTargetDate: row.savings_goal_target_date,
     updatedAt: row.updated_at,
   };
 }

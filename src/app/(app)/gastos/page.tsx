@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import { getDebts } from "@/application/debts/manage-debts";
-import { calculateMonthlyTotal, isDebtOwingThisMonth } from "@/domain/finance/calculations";
+import { getDebtIdsPaidThisMonth, getDebts } from "@/application/debts/manage-debts";
+import {
+  calculateMonthlyTotal,
+  isDebtOverdue,
+  isDebtOwingThisMonth,
+} from "@/domain/finance/calculations";
 import { formatCLP } from "@/lib/format";
 import { DebtCard } from "@/components/debt-card";
 import { DebtFormDialog } from "@/components/debt-form-dialog";
@@ -10,7 +14,9 @@ export const metadata: Metadata = {
 };
 
 export default async function GastosPage() {
-  const debts = await getDebts();
+  const [debts, paidThisMonthIds] = await Promise.all([getDebts(), getDebtIdsPaidThisMonth()]);
+  const todayDayOfMonth = new Date().getDate();
+
   const active = debts.filter(isDebtOwingThisMonth);
   const finished = debts.filter((debt) => !isDebtOwingThisMonth(debt));
   const monthlyTotal = calculateMonthlyTotal(debts);
@@ -33,7 +39,11 @@ export default async function GastosPage() {
 
       <div className="flex flex-col gap-3">
         {active.map((debt) => (
-          <DebtCard key={debt.id} debt={debt} />
+          <DebtCard
+            key={debt.id}
+            debt={debt}
+            isOverdue={isDebtOverdue(debt, paidThisMonthIds.has(debt.id), todayDayOfMonth)}
+          />
         ))}
       </div>
 

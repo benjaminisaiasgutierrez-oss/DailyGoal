@@ -74,6 +74,9 @@ create table user_settings (
   fuel_price_per_liter numeric(10, 2) not null default 0,
   km_per_liter numeric(6, 2) not null default 0,
   work_days smallint[] not null default '{1,2,3,4,5,6}',
+  uber_mode_enabled boolean not null default true,
+  savings_goal_amount numeric(12, 2),
+  savings_goal_target_date date,
   updated_at timestamptz not null default now()
 );
 
@@ -84,6 +87,7 @@ create type income_type as enum (
   'freelance',
   'regalo',
   'reembolso',
+  'ahorro',
   'otro'
 );
 

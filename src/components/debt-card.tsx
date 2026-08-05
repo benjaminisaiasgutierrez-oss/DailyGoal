@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { DebtFormDialog } from "@/components/debt-form-dialog";
 import { NewPaymentButton } from "@/components/new-payment-button";
 
-export function DebtCard({ debt }: { debt: Debt }) {
+export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: boolean }) {
   const finished = isDebtFinished(debt);
   const remaining = calculateRemainingBalance(debt);
   const progress =
@@ -25,9 +25,16 @@ export function DebtCard({ debt }: { debt: Debt }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
             <span className="font-medium">{debt.name}</span>
-            <Badge variant="secondary" className="w-fit">
-              {DEBT_TYPE_LABELS[debt.type]}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary" className="w-fit">
+                {DEBT_TYPE_LABELS[debt.type]}
+              </Badge>
+              {isOverdue && (
+                <Badge variant="destructive" className="w-fit">
+                  Atrasado
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <DebtFormDialog debt={debt} />

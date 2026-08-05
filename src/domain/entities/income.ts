@@ -1,4 +1,12 @@
-export const INCOME_TYPES = ["sueldo", "venta", "freelance", "regalo", "reembolso", "otro"] as const;
+export const INCOME_TYPES = [
+  "sueldo",
+  "venta",
+  "freelance",
+  "regalo",
+  "reembolso",
+  "ahorro",
+  "otro",
+] as const;
 
 export type IncomeType = (typeof INCOME_TYPES)[number];
 
@@ -8,6 +16,7 @@ export const INCOME_TYPE_LABELS: Record<IncomeType, string> = {
   freelance: "Trabajo freelance / extra",
   regalo: "Regalo",
   reembolso: "Reembolso",
+  ahorro: "Ahorro",
   otro: "Otro",
 };
 
