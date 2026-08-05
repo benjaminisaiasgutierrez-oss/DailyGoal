@@ -3,13 +3,14 @@ import type { Debt } from "@/domain/entities/debt";
 import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
 import { isDebtFinished, calculateRemainingBalance } from "@/domain/finance/calculations";
 import { formatCLP } from "@/lib/format";
-import { archiveDebt } from "@/application/debts/manage-debts";
+import { archiveDebt, deleteDebt } from "@/application/debts/manage-debts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DebtFormDialog } from "@/components/debt-form-dialog";
 import { NewPaymentButton } from "@/components/new-payment-button";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 
 export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: boolean }) {
   const finished = isDebtFinished(debt);
@@ -45,6 +46,11 @@ export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: 
                 </Button>
               </form>
             )}
+            <ConfirmDeleteButton
+              action={deleteDebt.bind(null, debt.id)}
+              confirmMessage={`¿Eliminar "${debt.name}"? Esta acción no se puede deshacer.`}
+              label="Eliminar gasto"
+            />
           </div>
         </div>
 

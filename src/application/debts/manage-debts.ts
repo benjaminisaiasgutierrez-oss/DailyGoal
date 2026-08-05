@@ -153,6 +153,15 @@ export async function archiveDebt(debtId: string): Promise<void> {
   revalidatePath("/");
 }
 
+export async function deleteDebt(debtId: string): Promise<void> {
+  const { userId } = await verifySession();
+  const supabase = await createClient();
+  await supabase.from("debts").delete().eq("id", debtId).eq("user_id", userId);
+  revalidatePath("/gastos");
+  revalidatePath("/");
+  revalidatePath("/ahorro");
+}
+
 export async function addPayment(debtId: string): Promise<{ error?: string }> {
   const { userId } = await verifySession();
   const supabase = await createClient();

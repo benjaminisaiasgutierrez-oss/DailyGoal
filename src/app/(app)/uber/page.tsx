@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getUberLogs, getUserSettings } from "@/application/uber/manage-uber";
+import { deleteLog, getUberLogs, getUserSettings } from "@/application/uber/manage-uber";
 import { formatCLP, formatNumber } from "@/lib/format";
 import { UberLogForm } from "@/components/uber-log-form";
 import { UberSettingsForm } from "@/components/uber-settings-form";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 
 export const metadata: Metadata = {
   title: "Uber",
@@ -31,25 +32,32 @@ export default async function UberPage() {
         {logs.map((log) => (
           <div
             key={log.id}
-            className="flex items-center justify-between rounded-lg bg-card px-3 py-2 text-sm ring-1 ring-foreground/10"
+            className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm ring-1 ring-foreground/10"
           >
-            <div className="flex flex-col">
-              <span className="font-medium">{log.logDate}</span>
-              <span className="text-xs text-muted-foreground">
-                {formatNumber(log.kmDriven)} km
-                {log.startTime && log.endTime
-                  ? ` · ${log.startTime.slice(0, 5)} - ${log.endTime.slice(0, 5)}`
-                  : ""}
-              </span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="font-medium">{formatCLP(log.earnings)}</span>
-              {log.fuelCost !== null && (
+            <div className="flex flex-1 items-center justify-between">
+              <div className="flex flex-col">
+                <span className="font-medium">{log.logDate}</span>
                 <span className="text-xs text-muted-foreground">
-                  Bencina {formatCLP(log.fuelCost)}
+                  {formatNumber(log.kmDriven)} km
+                  {log.startTime && log.endTime
+                    ? ` · ${log.startTime.slice(0, 5)} - ${log.endTime.slice(0, 5)}`
+                    : ""}
                 </span>
-              )}
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="font-medium">{formatCLP(log.earnings)}</span>
+                {log.fuelCost !== null && (
+                  <span className="text-xs text-muted-foreground">
+                    Bencina {formatCLP(log.fuelCost)}
+                  </span>
+                )}
+              </div>
             </div>
+            <ConfirmDeleteButton
+              action={deleteLog.bind(null, log.id)}
+              confirmMessage={`¿Eliminar el registro del ${log.logDate}?`}
+              label="Eliminar registro"
+            />
           </div>
         ))}
       </div>
