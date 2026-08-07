@@ -5,7 +5,122 @@ import { createClient } from "@/infrastructure/persistence/supabase-server";
 import { verifySession } from "@/application/auth/get-session";
 import { mapDebt } from "@/infrastructure/persistence/mappers";
 import type { Debt, DebtType } from "@/domain/entities/debt";
+import { isDebtOwingThisMonth } from "@/domain/finance/calculations";
 import { currentMonthRange } from "@/lib/date";
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+function firstOfMonthISO(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function lastOfMonthISO(year: number, month: number): string {
+  const day = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+// Meses (inclusive `from`, exclusive `to`) — los que ya pasaron completos
+// y todavía no se revisaron.
+function monthsBetween(
+  from: { year: number; month: number },
+  to: { year: number; month: number }
+): { year: number; month: number }[] {
+  const months: { year: number; month: number }[] = [];
+  let year = from.year;
+  let month = from.month;
+  while (year < to.year || (year === to.year && month < to.month)) {
+    months.push({ year, month });
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+  return months;
+}
+
+// Si pasó un mes completo sin ningún pago registrado para un gasto activo,
+// le suma +1 a installments_overdue por cada mes así, automáticamente. La
+// primera vez que ve un gasto (last_overdue_check en null) solo marca el
+// mes actual como punto de partida, sin retroactividad — para no inventar
+// atraso de meses anteriores a que esto existiera.
+async function reconcileOverdueInstallments(
+  supabase: SupabaseServerClient,
+  userId: string,
+  debts: Debt[],
+  lastOverdueCheckById: Map<string, string | null>
+): Promise<void> {
+  const { year: curYear, month: curMonth } = currentMonthRange();
+  const owing = debts.filter(isDebtOwingThisMonth);
+  if (owing.length === 0) return;
+
+  const needsFirstCheck: Debt[] = [];
+  const needsElapsedCheck: { debt: Debt; elapsed: { year: number; month: number }[] }[] = [];
+
+  for (const debt of owing) {
+    const lastCheck = lastOverdueCheckById.get(debt.id) ?? null;
+    if (lastCheck === null) {
+      needsFirstCheck.push(debt);
+      continue;
+    }
+    const [checkYear, checkMonth] = lastCheck.split("-").map(Number);
+    const elapsed = monthsBetween(
+      { year: checkYear, month: checkMonth },
+      { year: curYear, month: curMonth }
+    );
+    if (elapsed.length > 0) {
+      needsElapsedCheck.push({ debt, elapsed });
+    }
+  }
+
+  // Primera vez que se revisa este gasto: solo marca el mes actual como
+  // punto de partida, sin retroactividad.
+  for (const debt of needsFirstCheck) {
+    await supabase
+      .from("debts")
+      .update({ last_overdue_check: firstOfMonthISO(curYear, curMonth) })
+      .eq("id", debt.id)
+      .eq("user_id", userId);
+  }
+
+  if (needsElapsedCheck.length === 0) return;
+
+  const { data: payments } = await supabase
+    .from("debt_payments")
+    .select("debt_id, paid_at")
+    .in(
+      "debt_id",
+      needsElapsedCheck.map(({ debt }) => debt.id)
+    );
+
+  const paymentDatesByDebt = new Map<string, string[]>();
+  for (const payment of payments ?? []) {
+    const list = paymentDatesByDebt.get(payment.debt_id) ?? [];
+    list.push(payment.paid_at as string);
+    paymentDatesByDebt.set(payment.debt_id, list);
+  }
+
+  for (const { debt, elapsed } of needsElapsedCheck) {
+    const paidDates = paymentDatesByDebt.get(debt.id) ?? [];
+    let newlyOverdue = 0;
+    for (const { year, month } of elapsed) {
+      const from = firstOfMonthISO(year, month);
+      const to = `${lastOfMonthISO(year, month)}T23:59:59`;
+      const paidThatMonth = paidDates.some((date) => date >= from && date <= to);
+      if (!paidThatMonth) newlyOverdue += 1;
+    }
+
+    const updates: Record<string, number | string> = {
+      last_overdue_check: firstOfMonthISO(curYear, curMonth),
+    };
+    if (newlyOverdue > 0) {
+      debt.installmentsOverdue += newlyOverdue;
+      updates.installments_overdue = debt.installmentsOverdue;
+    }
+
+    await supabase.from("debts").update(updates).eq("id", debt.id).eq("user_id", userId);
+  }
+}
 
 export async function getDebts(): Promise<Debt[]> {
   const { userId } = await verifySession();
@@ -18,7 +133,15 @@ export async function getDebts(): Promise<Debt[]> {
     .limit(500);
 
   if (error) throw new Error("No se pudieron cargar los gastos.");
-  return (data ?? []).map(mapDebt);
+  const rows = data ?? [];
+  const debts = rows.map(mapDebt);
+
+  const lastOverdueCheckById = new Map(
+    rows.map((row) => [row.id as string, (row.last_overdue_check as string | null) ?? null])
+  );
+  await reconcileOverdueInstallments(supabase, userId, debts, lastOverdueCheckById);
+
+  return debts;
 }
 
 // IDs de gastos que ya tienen al menos un pago registrado este mes —
