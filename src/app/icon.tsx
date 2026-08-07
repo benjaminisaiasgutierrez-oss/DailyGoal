@@ -13,14 +13,14 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0b1220",
+          background: "#000",
           borderRadius: 7,
-          color: "#3b82f6",
           fontSize: 16,
           fontWeight: 700,
         }}
       >
-        DG
+        <span style={{ color: "#c6ff00" }}>D</span>
+        <span style={{ color: "#fff" }}>G</span>
       </div>
     ),
     { ...size }

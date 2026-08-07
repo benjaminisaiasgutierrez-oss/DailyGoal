@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Acceso seguro a DailyGoal.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0b1220",
-    theme_color: "#0b1220",
+    background_color: "#000000",
+    theme_color: "#000000",
     orientation: "portrait-primary",
     icons: [
       { src: "/icons/192", sizes: "192x192", type: "image/png", purpose: "any" },
