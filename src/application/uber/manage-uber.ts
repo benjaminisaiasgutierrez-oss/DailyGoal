@@ -1,11 +1,13 @@
 "use server";
 
+import { cache } from "react";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/infrastructure/persistence/supabase-server";
 import { verifySession } from "@/application/auth/get-session";
 import { mapUberLog, mapUserSettings } from "@/infrastructure/persistence/mappers";
 import { FUEL_TYPES, RIDESHARE_PLATFORMS, type UberLog } from "@/domain/entities/uber-log";
 import { DEFAULT_WORK_DAYS, type UserSettings } from "@/domain/entities/user-settings";
+import { todayISO } from "@/lib/date";
 
 export async function getUberLogs(limit = 30): Promise<UberLog[]> {
   const { userId } = await verifySession();
@@ -38,7 +40,7 @@ export async function getUberLogsInRange(startDate: string, endDate: string): Pr
   return (data ?? []).map(mapUberLog);
 }
 
-export async function getUserSettings(): Promise<UserSettings> {
+export const getUserSettings = cache(async (): Promise<UserSettings> => {
   const { userId } = await verifySession();
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -63,7 +65,7 @@ export async function getUserSettings(): Promise<UserSettings> {
     };
   }
   return mapUserSettings(data);
-}
+});
 
 export type UberFormState = { error?: string } | undefined;
 
@@ -293,21 +295,19 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
   return undefined;
 }
 
-// Se calcula sumando los km de uber_logs desde la última mantención, en vez
-// de mantener un contador aparte — así un registro editado o borrado nunca
-// lo deja desincronizado.
+// Se calcula sumando los km de uber_logs desde la última mantención vía una
+// función de Postgres (km_since_maintenance), en vez de traer todas las
+// filas y sumarlas en JavaScript.
 export async function getKmSinceMaintenance(lastMaintenanceDate: string | null): Promise<number> {
   const { userId } = await verifySession();
   const supabase = await createClient();
 
-  let query = supabase.from("uber_logs").select("km_driven").eq("user_id", userId);
-  if (lastMaintenanceDate) {
-    query = query.gt("log_date", lastMaintenanceDate);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc("km_since_maintenance", {
+    p_user_id: userId,
+    p_since: lastMaintenanceDate,
+  });
   if (error) throw new Error("No se pudo calcular el kilometraje desde la última mantención.");
-  return (data ?? []).reduce((sum, row) => sum + Number(row.km_driven), 0);
+  return Number(data ?? 0);
 }
 
 export async function markMaintenanceDone(): Promise<void> {
@@ -316,7 +316,7 @@ export async function markMaintenanceDone(): Promise<void> {
   await supabase
     .from("user_settings")
     .upsert(
-      { user_id: userId, last_maintenance_date: new Date().toISOString().slice(0, 10) },
+      { user_id: userId, last_maintenance_date: todayISO() },
       { onConflict: "user_id" }
     );
   revalidatePath("/uber");

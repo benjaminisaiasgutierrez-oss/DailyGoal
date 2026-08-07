@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/infrastructure/persistence/supabase-server";
 import { verifySession } from "@/application/auth/get-session";
-import { mapDebt, mapDebtPayment } from "@/infrastructure/persistence/mappers";
-import type { Debt, DebtPayment, DebtType } from "@/domain/entities/debt";
+import { mapDebt } from "@/infrastructure/persistence/mappers";
+import type { Debt, DebtType } from "@/domain/entities/debt";
+import { currentMonthRange } from "@/lib/date";
 
 export async function getDebts(): Promise<Debt[]> {
   const { userId } = await verifySession();
@@ -13,7 +14,8 @@ export async function getDebts(): Promise<Debt[]> {
     .from("debts")
     .select("*")
     .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(500);
 
   if (error) throw new Error("No se pudieron cargar los gastos.");
   return (data ?? []).map(mapDebt);
@@ -25,8 +27,7 @@ export async function getDebtIdsPaidThisMonth(): Promise<Set<string>> {
   const { userId } = await verifySession();
   const supabase = await createClient();
 
-  const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const { first: firstOfMonth } = currentMonthRange();
 
   const { data, error } = await supabase
     .from("debt_payments")
@@ -36,19 +37,6 @@ export async function getDebtIdsPaidThisMonth(): Promise<Set<string>> {
 
   if (error) throw new Error("No se pudo revisar el estado de los pagos.");
   return new Set((data ?? []).map((row) => row.debt_id as string));
-}
-
-export async function getDebtPayments(debtId: string): Promise<DebtPayment[]> {
-  await verifySession();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("debt_payments")
-    .select("*")
-    .eq("debt_id", debtId)
-    .order("paid_at", { ascending: false });
-
-  if (error) throw new Error("No se pudo cargar el historial de pagos.");
-  return (data ?? []).map(mapDebtPayment);
 }
 
 export type DebtFormState = { error?: string } | undefined;
@@ -170,7 +158,6 @@ export async function deleteDebt(debtId: string): Promise<void> {
   await supabase.from("debts").delete().eq("id", debtId).eq("user_id", userId);
   revalidatePath("/gastos");
   revalidatePath("/");
-  revalidatePath("/ahorro");
 }
 
 export async function addPayment(debtId: string): Promise<{ error?: string }> {
@@ -212,7 +199,6 @@ export async function addPayment(debtId: string): Promise<{ error?: string }> {
 
     revalidatePath("/gastos");
     revalidatePath("/");
-    revalidatePath("/ahorro");
     return {};
   }
 
@@ -238,6 +224,5 @@ export async function addPayment(debtId: string): Promise<{ error?: string }> {
 
   revalidatePath("/gastos");
   revalidatePath("/");
-  revalidatePath("/ahorro");
   return {};
 }

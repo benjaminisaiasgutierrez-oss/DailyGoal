@@ -1,7 +1,8 @@
 import type { UberLog } from "@/domain/entities/uber-log";
 
-// null si falta hora de inicio o término. Si el turno cruza medianoche
-// (término menor que inicio) se asume que terminó al día siguiente.
+// null si falta hora de inicio o término. Si el término es menor o igual al
+// inicio (cruza medianoche, o un turno de 24 horas exactas) se asume que
+// terminó al día siguiente.
 export function calculateHoursWorked(log: Pick<UberLog, "startTime" | "endTime">): number | null {
   if (!log.startTime || !log.endTime) return null;
   const [startH, startM] = log.startTime.slice(0, 5).split(":").map(Number);
@@ -9,7 +10,7 @@ export function calculateHoursWorked(log: Pick<UberLog, "startTime" | "endTime">
   if ([startH, startM, endH, endM].some((n) => !Number.isFinite(n))) return null;
 
   let minutes = endH * 60 + endM - (startH * 60 + startM);
-  if (minutes < 0) minutes += 24 * 60;
+  if (minutes <= 0) minutes += 24 * 60;
   return minutes / 60;
 }
 
@@ -27,20 +28,6 @@ export function calculateEarningsPerHour(
   const hours = calculateHoursWorked(log);
   if (hours === null || hours <= 0) return null;
   return calculateTotalEarnings(log) / hours;
-}
-
-export function calculateEarningsPerTrip(
-  log: Pick<UberLog, "earnings" | "tips" | "tripCount">
-): number | null {
-  if (!log.tripCount || log.tripCount <= 0) return null;
-  return calculateTotalEarnings(log) / log.tripCount;
-}
-
-export function calculateRealKmPerLiter(
-  log: Pick<UberLog, "kmDriven" | "fuelLiters">
-): number | null {
-  if (!log.fuelLiters || log.fuelLiters <= 0) return null;
-  return log.kmDriven / log.fuelLiters;
 }
 
 export type UberPeriodStats = {

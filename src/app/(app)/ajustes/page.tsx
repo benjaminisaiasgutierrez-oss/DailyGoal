@@ -4,9 +4,9 @@ import { getCurrentUser } from "@/application/auth/get-session";
 import { logout } from "@/application/auth/authenticate-user";
 import { getUserSettings } from "@/application/uber/manage-uber";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GeneralSettingsForm } from "@/components/general-settings-form";
+import { SubmitButton } from "@/components/submit-button";
 
 export const metadata: Metadata = {
   title: "Ajustes",
@@ -48,10 +48,10 @@ export default async function AjustesPage() {
       </Card>
 
       <form action={logout}>
-        <Button type="submit" variant="outline" className="w-full">
+        <SubmitButton variant="outline" className="w-full" pendingLabel="Cerrando sesión...">
           <LogOut className="size-4" />
           Cerrar sesión
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   );

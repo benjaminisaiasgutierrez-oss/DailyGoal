@@ -13,7 +13,8 @@ export async function getSavingsGoals(): Promise<SavingsGoal[]> {
     .from("savings_goals")
     .select("*")
     .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(200);
 
   if (error) throw new Error("No se pudieron cargar las metas de ahorro.");
   return (data ?? []).map(mapSavingsGoal);

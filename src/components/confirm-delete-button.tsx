@@ -1,9 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 
 export function ConfirmDeleteButton({
   action,
@@ -14,29 +12,13 @@ export function ConfirmDeleteButton({
   confirmMessage: string;
   label?: string;
 }) {
-  const [pending, startTransition] = useTransition();
-
-  function handleClick() {
-    if (!window.confirm(confirmMessage)) return;
-    startTransition(async () => {
-      try {
-        await action();
-      } catch {
-        toast.error("No se pudo eliminar.");
-      }
-    });
-  }
-
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label={label}
-      onClick={handleClick}
-      disabled={pending}
-    >
-      <Trash2 className="size-3.5" />
-    </Button>
+    <ConfirmActionButton
+      action={action}
+      confirmMessage={confirmMessage}
+      label={label}
+      icon={Trash2}
+      errorMessage="No se pudo eliminar."
+    />
   );
 }

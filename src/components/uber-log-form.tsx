@@ -23,10 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { todayISO } from "@/lib/date";
 
 export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => void }) {
   const action = log ? updateLog : saveLog;

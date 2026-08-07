@@ -20,9 +20,15 @@ export async function getIncomes(limit = 50): Promise<Income[]> {
   return (data ?? []).map(mapIncome);
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 // Incluye los ingresos de fecha única dentro del rango, más TODOS los
 // recurrentes (no tienen income_date — se repiten cada mes por definición).
 export async function getIncomesInRange(startDate: string, endDate: string): Promise<Income[]> {
+  if (!ISO_DATE.test(startDate) || !ISO_DATE.test(endDate)) {
+    throw new Error("Rango de fechas inválido.");
+  }
+
   const { userId } = await verifySession();
   const supabase = await createClient();
   const { data, error } = await supabase

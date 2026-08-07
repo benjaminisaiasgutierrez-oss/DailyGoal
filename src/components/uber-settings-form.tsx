@@ -67,6 +67,7 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
               <button
                 type="button"
                 onClick={() => setMode("weekdays")}
+                aria-pressed={mode === "weekdays"}
                 className={cn(
                   "flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors",
                   mode === "weekdays"
@@ -79,6 +80,7 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
               <button
                 type="button"
                 onClick={() => setMode("fixed_count")}
+                aria-pressed={mode === "fixed_count"}
                 className={cn(
                   "flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors",
                   mode === "fixed_count"

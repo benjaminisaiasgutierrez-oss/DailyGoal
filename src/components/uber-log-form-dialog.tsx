@@ -17,6 +17,8 @@ export function UberLogFormDialog({ log }: { log: UberLog }) {
         variant="ghost"
         size="icon-sm"
         aria-label="Editar registro"
+        aria-haspopup="dialog"
+        aria-expanded={open}
         onClick={() => setOpen(true)}
       >
         <Pencil className="size-3.5" />
@@ -25,7 +27,9 @@ export function UberLogFormDialog({ log }: { log: UberLog }) {
         <DialogHeader>
           <DialogTitle>Editar registro del {log.logDate}</DialogTitle>
         </DialogHeader>
-        <UberLogForm log={log} onSaved={() => setOpen(false)} />
+        {/* key fuerza una instancia nueva cada vez que se abre, para que un
+            error de un envío anterior no quede pegado al reabrir. */}
+        <UberLogForm key={open ? "open" : "closed"} log={log} onSaved={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

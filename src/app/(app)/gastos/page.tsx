@@ -6,6 +6,7 @@ import {
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
 import { formatCLP } from "@/lib/format";
+import { todayDayOfMonth as getTodayDayOfMonth } from "@/lib/date";
 import { DebtCard } from "@/components/debt-card";
 import { DebtFormDialog } from "@/components/debt-form-dialog";
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function GastosPage() {
   const [debts, paidThisMonthIds] = await Promise.all([getDebts(), getDebtIdsPaidThisMonth()]);
-  const todayDayOfMonth = new Date().getDate();
+  const todayDayOfMonth = getTodayDayOfMonth();
 
   const owing = debts.filter(isDebtOwingThisMonth);
   const finished = debts.filter((debt) => !isDebtOwingThisMonth(debt));

@@ -89,6 +89,21 @@ create table uber_logs (
 );
 
 create index uber_logs_user_id_idx on uber_logs (user_id);
+create index uber_logs_user_date_idx on uber_logs (user_id, log_date desc, start_time);
+
+-- Suma los km desde la última mantención en el servidor (SQL), en vez de
+-- traer todas las filas y sumarlas en JavaScript.
+create or replace function km_since_maintenance(p_user_id uuid, p_since date)
+returns numeric
+language sql
+stable
+security invoker
+as $$
+  select coalesce(sum(km_driven), 0)
+  from uber_logs
+  where user_id = p_user_id
+    and (p_since is null or log_date > p_since);
+$$;
 
 -- Configuración por usuario. work_days: 0 = domingo ... 6 = sábado.
 -- work_days_mode: 'weekdays' usa work_days; 'fixed_count' usa work_days_per_month.

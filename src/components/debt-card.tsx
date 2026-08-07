@@ -6,11 +6,11 @@ import { formatCLP } from "@/lib/format";
 import { archiveDebt, deleteDebt } from "@/application/debts/manage-debts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DebtFormDialog } from "@/components/debt-form-dialog";
 import { NewPaymentButton } from "@/components/new-payment-button";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 
 export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: boolean }) {
   const finished = isDebtFinished(debt);
@@ -42,11 +42,13 @@ export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: 
           <div className="flex items-center gap-1">
             <DebtFormDialog debt={debt} />
             {finished && (
-              <form action={archiveDebt.bind(null, debt.id)}>
-                <Button type="submit" variant="ghost" size="icon-sm" aria-label="Archivar">
-                  <Archive className="size-3.5" />
-                </Button>
-              </form>
+              <ConfirmActionButton
+                action={archiveDebt.bind(null, debt.id)}
+                confirmMessage={`¿Archivar "${debt.name}"? No hay forma de desarchivarlo desde la app.`}
+                label="Archivar"
+                icon={Archive}
+                errorMessage="No se pudo archivar."
+              />
             )}
             <ConfirmDeleteButton
               action={deleteDebt.bind(null, debt.id)}
@@ -73,7 +75,7 @@ export function DebtCard({ debt, isOverdue = false }: { debt: Debt; isOverdue?: 
               </span>
               {remaining !== null && <span>Quedan {formatCLP(remaining)}</span>}
             </div>
-            <Progress value={progress} />
+            <Progress value={progress} aria-label={`Cuotas pagadas de ${debt.name}`} />
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">Recurrente indefinido</p>

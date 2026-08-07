@@ -1,4 +1,4 @@
-import type { Debt, DebtPayment, DebtType } from "@/domain/entities/debt";
+import type { Debt, DebtType } from "@/domain/entities/debt";
 import type { UberLog, FuelType, RidesharePlatform } from "@/domain/entities/uber-log";
 import type { UserSettings, WorkDaysMode } from "@/domain/entities/user-settings";
 import type { Income, IncomeType } from "@/domain/entities/income";
@@ -16,14 +16,6 @@ type DebtRow = {
   installments_overdue: number;
   active: boolean;
   created_at: string;
-};
-
-type DebtPaymentRow = {
-  id: string;
-  debt_id: string;
-  installment_number: number;
-  amount: number;
-  paid_at: string;
 };
 
 type UberLogRow = {
@@ -80,16 +72,6 @@ export function mapDebt(row: DebtRow): Debt {
     installmentsOverdue: row.installments_overdue,
     active: row.active,
     createdAt: row.created_at,
-  };
-}
-
-export function mapDebtPayment(row: DebtPaymentRow): DebtPayment {
-  return {
-    id: row.id,
-    debtId: row.debt_id,
-    installmentNumber: row.installment_number,
-    amount: Number(row.amount),
-    paidAt: row.paid_at,
   };
 }
 

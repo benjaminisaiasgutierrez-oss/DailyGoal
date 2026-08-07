@@ -51,11 +51,3 @@ export type Debt = {
   active: boolean;
   createdAt: string;
 };
-
-export type DebtPayment = {
-  id: string;
-  debtId: string;
-  installmentNumber: number;
-  amount: number;
-  paidAt: string;
-};

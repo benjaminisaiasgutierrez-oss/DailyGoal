@@ -35,7 +35,7 @@ export function SavingsGoalCard({ goal }: { goal: SavingsGoal }) {
 
         {progress !== null ? (
           <>
-            <Progress value={progress} />
+            <Progress value={progress} aria-label={`Progreso de la meta ${goal.name}`} />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Meta {formatCLP(goal.targetAmount ?? 0)}</span>
               <span>

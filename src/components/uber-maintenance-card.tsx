@@ -2,7 +2,7 @@ import { markMaintenanceDone } from "@/application/uber/manage-uber";
 import { formatNumber } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 
 export function UberMaintenanceCard({
   kmSinceMaintenance,
@@ -26,12 +26,12 @@ export function UberMaintenanceCard({
             {formatNumber(kmSinceMaintenance)} / {formatNumber(maintenanceIntervalKm)} km
           </span>
         </div>
-        <Progress value={progress} />
+        <Progress value={progress} aria-label="Progreso hacia la próxima mantención" />
         {due && <p className="text-xs text-destructive">Ya pasaste el intervalo que configuraste.</p>}
         <form action={markMaintenanceDone}>
-          <Button type="submit" variant="outline" className="w-full" size="sm">
+          <SubmitButton variant="outline" className="w-full" size="sm" pendingLabel="Guardando...">
             Marcar mantención hecha
-          </Button>
+          </SubmitButton>
         </form>
       </CardContent>
     </Card>

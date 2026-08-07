@@ -16,6 +16,7 @@ import {
 import { calculateTotalEarnings } from "@/domain/uber/calculations";
 import { DEBT_TYPE_LABELS } from "@/domain/entities/debt";
 import { formatCLP } from "@/lib/format";
+import { currentMonthRange, todayDayOfMonth as getTodayDayOfMonth } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -25,16 +26,6 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Resumen",
 };
-
-function currentMonthRange() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const first = new Date(year, month - 1, 1).toISOString().slice(0, 10);
-  const last = new Date(year, month, 0).toISOString().slice(0, 10);
-  const today = now.toISOString().slice(0, 10);
-  return { year, month, first, last, today };
-}
 
 export default async function HomePage() {
   const { year, month, first, last, today } = currentMonthRange();
@@ -61,7 +52,7 @@ export default async function HomePage() {
   const incomeThisMonth = incomesThisMonth.reduce((sum, income) => sum + income.amount, 0);
   const earnedThisMonth = uberEarnedThisMonth + incomeThisMonth;
 
-  const todayDayOfMonth = new Date().getDate();
+  const todayDayOfMonth = getTodayDayOfMonth();
   const todayLogs = logsThisMonth.filter((log) => log.logDate === today);
   const incomeToday = incomesThisMonth
     .filter((income) =>
@@ -121,7 +112,7 @@ export default async function HomePage() {
             </div>
           )}
 
-          <Progress value={todayProgress} />
+          <Progress value={todayProgress} aria-label="Progreso de la meta diaria" />
 
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Ganaste {formatCLP(earnedToday)}</span>
@@ -155,7 +146,7 @@ export default async function HomePage() {
             <span className="text-muted-foreground">Cuentas del mes</span>
             <span className="font-medium">{formatCLP(monthlyTotal)}</span>
           </div>
-          <Progress value={monthProgress} />
+          <Progress value={monthProgress} aria-label="Progreso del mes" />
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Neto</span>
             <span className={net >= 0 ? "font-medium" : "font-medium text-destructive"}>
