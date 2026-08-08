@@ -1,9 +1,12 @@
 import { ImageResponse } from "next/og";
+import { loadGoogleFont } from "@/lib/og-font";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-export default function AppleIcon() {
+export default async function AppleIcon() {
+  const fontData = await loadGoogleFont("Roboto", 900);
+
   return new ImageResponse(
     (
       <div
@@ -15,13 +18,17 @@ export default function AppleIcon() {
           justifyContent: "center",
           background: "#000",
           fontSize: 76,
-          fontWeight: 700,
+          fontWeight: 900,
+          fontFamily: "Roboto",
         }}
       >
         <span style={{ color: "#c6ff00" }}>D</span>
         <span style={{ color: "#fff" }}>G</span>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [{ name: "Roboto", data: fontData, weight: 900, style: "normal" }],
+    }
   );
 }
