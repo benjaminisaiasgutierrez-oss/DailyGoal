@@ -14,16 +14,20 @@ export function calculateHoursWorked(log: Pick<UberLog, "startTime" | "endTime">
   return minutes / 60;
 }
 
-export function calculateTotalEarnings(log: Pick<UberLog, "earnings" | "tips">): number {
-  return log.earnings + (log.tips ?? 0);
+export function calculateTotalEarnings(
+  log: Pick<UberLog, "earningsCash" | "earningsCard" | "tips">
+): number {
+  return log.earningsCash + log.earningsCard + (log.tips ?? 0);
 }
 
-export function calculateNetProfit(log: Pick<UberLog, "earnings" | "tips" | "fuelCost">): number {
+export function calculateNetProfit(
+  log: Pick<UberLog, "earningsCash" | "earningsCard" | "tips" | "fuelCost">
+): number {
   return calculateTotalEarnings(log) - (log.fuelCost ?? 0);
 }
 
 export function calculateEarningsPerHour(
-  log: Pick<UberLog, "earnings" | "tips" | "startTime" | "endTime">
+  log: Pick<UberLog, "earningsCash" | "earningsCard" | "tips" | "startTime" | "endTime">
 ): number | null {
   const hours = calculateHoursWorked(log);
   if (hours === null || hours <= 0) return null;

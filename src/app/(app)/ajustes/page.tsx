@@ -6,6 +6,7 @@ import { getUserSettings } from "@/application/uber/manage-uber";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GeneralSettingsForm } from "@/components/general-settings-form";
+import { BiometricSettings } from "@/components/biometric-settings";
 import { SubmitButton } from "@/components/submit-button";
 
 export const metadata: Metadata = {
@@ -35,6 +36,15 @@ export default async function AjustesPage() {
         </CardHeader>
         <CardContent>
           <ThemeToggle />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Seguridad</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BiometricSettings enabled={settings.biometricLockEnabled} />
         </CardContent>
       </Card>
 

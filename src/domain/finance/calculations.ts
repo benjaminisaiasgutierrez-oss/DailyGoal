@@ -1,5 +1,4 @@
 import type { Debt } from "@/domain/entities/debt";
-import type { UserSettings } from "@/domain/entities/user-settings";
 import type { SavingsGoal } from "@/domain/entities/savings-goal";
 
 // No cuenta como "terminado" si todavía quedan cuotas atrasadas declaradas,
@@ -34,27 +33,6 @@ export function calculateRemainingBalance(
     return overdueAmount > 0 ? overdueAmount : null;
   }
   return Math.max(debt.totalInstallments - debt.installmentsPaid, 0) * debt.amount + overdueAmount;
-}
-
-export function getWorkingDaysInMonth(year: number, month: number, workDays: number[]): number {
-  const daysInMonth = new Date(year, month, 0).getDate();
-  let count = 0;
-  for (let day = 1; day <= daysInMonth; day++) {
-    const weekday = new Date(year, month - 1, day).getDay();
-    if (workDays.includes(weekday)) count++;
-  }
-  return count;
-}
-
-export function resolveWorkingDaysInMonth(
-  settings: Pick<UserSettings, "workDaysMode" | "workDays" | "workDaysPerMonth">,
-  year: number,
-  month: number
-): number {
-  if (settings.workDaysMode === "fixed_count") {
-    return settings.workDaysPerMonth ?? 0;
-  }
-  return getWorkingDaysInMonth(year, month, settings.workDays);
 }
 
 export function calculateDailyGoal(monthlyTotal: number, workingDaysInMonth: number): number {

@@ -12,7 +12,6 @@ import {
   calculateMonthlyTotal,
   calculateRemainingBalance,
   calculateSavingsMonthlyPace,
-  resolveWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
 import { calculateTotalEarnings } from "@/domain/uber/calculations";
@@ -83,8 +82,7 @@ export default async function HomePage() {
     dailyGoal = automatic.amount;
     goalSurplus = automatic.surplus;
   } else {
-    const workingDays = resolveWorkingDaysInMonth(settings, year, month);
-    dailyGoal = calculateDailyGoal(goalTotal, workingDays);
+    dailyGoal = calculateDailyGoal(goalTotal, settings.workDaysPerMonth ?? 0);
   }
 
   const isAheadOfGoal = goalSurplus > 0;

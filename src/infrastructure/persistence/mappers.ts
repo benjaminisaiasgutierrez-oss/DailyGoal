@@ -23,7 +23,8 @@ type UberLogRow = {
   user_id: string;
   log_date: string;
   km_driven: number;
-  earnings: number;
+  earnings_cash: number;
+  earnings_card: number;
   fuel_liters: number | null;
   fuel_cost: number | null;
   fuel_price_per_liter: number | null;
@@ -40,12 +41,12 @@ type UserSettingsRow = {
   user_id: string;
   fuel_price_per_liter: number;
   km_per_liter: number;
-  work_days: number[];
   work_days_mode: WorkDaysMode;
   work_days_per_month: number | null;
   uber_mode_enabled: boolean;
   maintenance_interval_km: number | null;
   last_maintenance_date: string | null;
+  biometric_lock_enabled: boolean;
   updated_at: string;
 };
 
@@ -81,7 +82,8 @@ export function mapUberLog(row: UberLogRow): UberLog {
     userId: row.user_id,
     logDate: row.log_date,
     kmDriven: Number(row.km_driven),
-    earnings: Number(row.earnings),
+    earningsCash: Number(row.earnings_cash),
+    earningsCard: Number(row.earnings_card),
     fuelLiters: row.fuel_liters !== null ? Number(row.fuel_liters) : null,
     fuelCost: row.fuel_cost !== null ? Number(row.fuel_cost) : null,
     fuelPricePerLiter: row.fuel_price_per_liter !== null ? Number(row.fuel_price_per_liter) : null,
@@ -100,13 +102,13 @@ export function mapUserSettings(row: UserSettingsRow): UserSettings {
     userId: row.user_id,
     fuelPricePerLiter: Number(row.fuel_price_per_liter),
     kmPerLiter: Number(row.km_per_liter),
-    workDays: row.work_days,
     workDaysMode: row.work_days_mode,
     workDaysPerMonth: row.work_days_per_month,
     uberModeEnabled: row.uber_mode_enabled,
     maintenanceIntervalKm:
       row.maintenance_interval_km !== null ? Number(row.maintenance_interval_km) : null,
     lastMaintenanceDate: row.last_maintenance_date,
+    biometricLockEnabled: row.biometric_lock_enabled,
     updatedAt: row.updated_at,
   };
 }

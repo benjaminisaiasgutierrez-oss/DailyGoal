@@ -56,28 +56,40 @@ export function UberLogForm({ log, onSaved }: { log?: UberLog; onSaved?: () => v
           required
         />
       </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="kmDriven">Km recorridos</Label>
+        <Input
+          id="kmDriven"
+          name="kmDriven"
+          type="number"
+          min="0"
+          step="0.1"
+          defaultValue={log?.kmDriven}
+          required
+        />
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="kmDriven">Km recorridos</Label>
+          <Label htmlFor="earningsCash">Ganado en efectivo</Label>
           <Input
-            id="kmDriven"
-            name="kmDriven"
+            id="earningsCash"
+            name="earningsCash"
             type="number"
             min="0"
-            step="0.1"
-            defaultValue={log?.kmDriven}
+            step="1"
+            defaultValue={log?.earningsCash ?? 0}
             required
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="earnings">Ganado</Label>
+          <Label htmlFor="earningsCard">Ganado con tarjeta</Label>
           <Input
-            id="earnings"
-            name="earnings"
+            id="earningsCard"
+            name="earningsCard"
             type="number"
             min="0"
             step="1"
-            defaultValue={log?.earnings}
+            defaultValue={log?.earningsCard ?? 0}
             required
           />
         </div>

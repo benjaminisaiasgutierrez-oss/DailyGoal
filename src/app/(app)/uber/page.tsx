@@ -83,6 +83,9 @@ export default async function UberPage() {
                 </div>
                 <div className="flex flex-col items-end gap-0.5">
                   <span className="font-medium">{formatCLP(totalEarnings)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Efectivo {formatCLP(log.earningsCash)} · Tarjeta {formatCLP(log.earningsCard)}
+                  </span>
                   {log.fuelCost !== null && (
                     <span className="text-xs text-muted-foreground">
                       Bencina {formatCLP(log.fuelCost)}

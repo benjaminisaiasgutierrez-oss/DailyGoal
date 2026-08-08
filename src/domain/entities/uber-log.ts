@@ -27,7 +27,8 @@ export type UberLog = {
   userId: string;
   logDate: string;
   kmDriven: number;
-  earnings: number;
+  earningsCash: number;
+  earningsCard: number;
   fuelLiters: number | null;
   fuelCost: number | null;
   fuelPricePerLiter: number | null;

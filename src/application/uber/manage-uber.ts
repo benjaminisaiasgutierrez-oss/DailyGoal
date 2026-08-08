@@ -6,12 +6,7 @@ import { createClient } from "@/infrastructure/persistence/supabase-server";
 import { verifySession } from "@/application/auth/get-session";
 import { mapUberLog, mapUserSettings } from "@/infrastructure/persistence/mappers";
 import { FUEL_TYPES, RIDESHARE_PLATFORMS, type UberLog } from "@/domain/entities/uber-log";
-import {
-  DEFAULT_WORK_DAYS,
-  WORK_DAYS_MODES,
-  type UserSettings,
-  type WorkDaysMode,
-} from "@/domain/entities/user-settings";
+import { WORK_DAYS_MODES, type UserSettings, type WorkDaysMode } from "@/domain/entities/user-settings";
 import { todayISO } from "@/lib/date";
 
 export async function getUberLogs(limit = 30): Promise<UberLog[]> {
@@ -60,12 +55,12 @@ export const getUserSettings = cache(async (): Promise<UserSettings> => {
       userId,
       fuelPricePerLiter: 0,
       kmPerLiter: 0,
-      workDays: DEFAULT_WORK_DAYS,
-      workDaysMode: "weekdays",
+      workDaysMode: "fixed_count",
       workDaysPerMonth: null,
       uberModeEnabled: true,
       maintenanceIntervalKm: null,
       lastMaintenanceDate: null,
+      biometricLockEnabled: false,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -80,7 +75,8 @@ function parseUberLogForm(formData: FormData):
       value: {
         logDate: string;
         kmDriven: number;
-        earnings: number;
+        earningsCash: number;
+        earningsCard: number;
         fuelLiters: number | null;
         fuelCost: number;
         fuelPricePerLiter: number | null;
@@ -95,7 +91,10 @@ function parseUberLogForm(formData: FormData):
   | { ok: false; error: string } {
   const logDate = String(formData.get("logDate") ?? "");
   const kmDriven = Number(formData.get("kmDriven"));
-  const earnings = Number(formData.get("earnings"));
+  const earningsCashRaw = String(formData.get("earningsCash") ?? "").trim();
+  const earningsCash = earningsCashRaw ? Number(earningsCashRaw) : 0;
+  const earningsCardRaw = String(formData.get("earningsCard") ?? "").trim();
+  const earningsCard = earningsCardRaw ? Number(earningsCardRaw) : 0;
   const fuelLitersRaw = String(formData.get("fuelLiters") ?? "").trim();
   const fuelCostRaw = String(formData.get("fuelCost") ?? "").trim();
   const fuelLiters = fuelLitersRaw ? Number(fuelLitersRaw) : null;
@@ -115,8 +114,11 @@ function parseUberLogForm(formData: FormData):
   if (!Number.isFinite(kmDriven) || kmDriven < 0) {
     return { ok: false, error: "Ingresa los km recorridos." };
   }
-  if (!Number.isFinite(earnings) || earnings < 0) {
-    return { ok: false, error: "Ingresa lo que ganaste ese día." };
+  if (!Number.isFinite(earningsCash) || earningsCash < 0) {
+    return { ok: false, error: "Ingresa lo que ganaste en efectivo (o 0 si no aplica)." };
+  }
+  if (!Number.isFinite(earningsCard) || earningsCard < 0) {
+    return { ok: false, error: "Ingresa lo que ganaste con tarjeta (o 0 si no aplica)." };
   }
   if (fuelLiters !== null && (!Number.isFinite(fuelLiters) || fuelLiters < 0)) {
     return { ok: false, error: "Los litros cargados no son válidos." };
@@ -148,7 +150,8 @@ function parseUberLogForm(formData: FormData):
     value: {
       logDate,
       kmDriven,
-      earnings,
+      earningsCash,
+      earningsCard,
       fuelLiters,
       fuelCost,
       fuelPricePerLiter,
@@ -174,7 +177,8 @@ export async function saveLog(_prev: UberFormState, formData: FormData): Promise
     user_id: userId,
     log_date: parsed.value.logDate,
     km_driven: parsed.value.kmDriven,
-    earnings: parsed.value.earnings,
+    earnings_cash: parsed.value.earningsCash,
+    earnings_card: parsed.value.earningsCard,
     fuel_liters: parsed.value.fuelLiters,
     fuel_cost: parsed.value.fuelCost,
     fuel_price_per_liter: parsed.value.fuelPricePerLiter,
@@ -209,7 +213,8 @@ export async function updateLog(_prev: UberFormState, formData: FormData): Promi
     .update({
       log_date: parsed.value.logDate,
       km_driven: parsed.value.kmDriven,
-      earnings: parsed.value.earnings,
+      earnings_cash: parsed.value.earningsCash,
+      earnings_card: parsed.value.earningsCard,
       fuel_liters: parsed.value.fuelLiters,
       fuel_cost: parsed.value.fuelCost,
       fuel_price_per_liter: parsed.value.fuelPricePerLiter,
@@ -243,8 +248,7 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
 
   const fuelPricePerLiter = Number(formData.get("fuelPricePerLiter"));
   const kmPerLiter = Number(formData.get("kmPerLiter"));
-  const workDaysMode = String(formData.get("workDaysMode") ?? "weekdays");
-  const workDays = formData.getAll("workDays").map((value) => Number(value));
+  const workDaysMode = String(formData.get("workDaysMode") ?? "fixed_count");
   const workDaysPerMonthRaw = String(formData.get("workDaysPerMonth") ?? "").trim();
   const workDaysPerMonth = workDaysPerMonthRaw ? Number(workDaysPerMonthRaw) : null;
   const maintenanceIntervalKmRaw = String(formData.get("maintenanceIntervalKm") ?? "").trim();
@@ -257,10 +261,7 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
     return { error: "Ingresa un rendimiento km/litro válido." };
   }
   if (!WORK_DAYS_MODES.includes(workDaysMode as WorkDaysMode)) {
-    return { error: "Modo de días de trabajo inválido." };
-  }
-  if (workDaysMode === "weekdays" && workDays.length === 0) {
-    return { error: "Selecciona al menos un día de trabajo." };
+    return { error: "Modo de meta diaria inválido." };
   }
   if (
     workDaysMode === "fixed_count" &&
@@ -284,7 +285,6 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
       user_id: userId,
       fuel_price_per_liter: fuelPricePerLiter,
       km_per_liter: kmPerLiter,
-      work_days: workDays.length > 0 ? workDays : DEFAULT_WORK_DAYS,
       work_days_mode: workDaysMode,
       work_days_per_month: workDaysMode === "fixed_count" ? workDaysPerMonth : null,
       maintenance_interval_km: maintenanceIntervalKm,

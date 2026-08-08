@@ -76,7 +76,8 @@ create table uber_logs (
   user_id uuid not null references auth.users(id) on delete cascade,
   log_date date not null,
   km_driven numeric(8, 2) not null default 0 check (km_driven >= 0),
-  earnings numeric(12, 2) not null default 0 check (earnings >= 0),
+  earnings_cash numeric(12, 2) not null default 0 check (earnings_cash >= 0),
+  earnings_card numeric(12, 2) not null default 0 check (earnings_card >= 0),
   fuel_liters numeric(8, 2) check (fuel_liters is null or fuel_liters >= 0),
   fuel_cost numeric(12, 2) check (fuel_cost is null or fuel_cost >= 0),
   fuel_price_per_liter numeric(10, 2) check (
@@ -109,10 +110,10 @@ as $$
     and (p_since is null or log_date > p_since);
 $$;
 
--- Configuración por usuario. work_days: 0 = domingo ... 6 = sábado.
--- work_days_mode: 'weekdays' usa work_days; 'fixed_count' usa work_days_per_month;
--- 'automatic' ignora ambos y reparte el mes completo entre todos los días
--- calendario que quedan, recalculando la meta diaria según lo ya ganado.
+-- Configuración por usuario. work_days_mode: 'fixed_count' usa
+-- work_days_per_month; 'automatic' lo ignora y reparte el mes completo
+-- entre todos los días calendario que quedan, recalculando la meta diaria
+-- según lo ya ganado.
 -- Mantención: km_since_maintenance se calcula sumando uber_logs desde
 -- last_maintenance_date (no es un contador propio), así que un registro
 -- editado o borrado no lo desincroniza.
@@ -120,8 +121,7 @@ create table user_settings (
   user_id uuid primary key references auth.users (id) on delete cascade,
   fuel_price_per_liter numeric(10, 2) not null default 0,
   km_per_liter numeric(6, 2) not null default 0,
-  work_days smallint[] not null default '{1,2,3,4,5,6}',
-  work_days_mode text not null default 'weekdays' check (work_days_mode in ('weekdays', 'fixed_count', 'automatic')),
+  work_days_mode text not null default 'fixed_count' check (work_days_mode in ('fixed_count', 'automatic')),
   work_days_per_month smallint check (
     work_days_per_month is null
     or (
@@ -134,8 +134,23 @@ create table user_settings (
     or maintenance_interval_km > 0
   ),
   last_maintenance_date date,
+  biometric_lock_enabled boolean not null default false,
   updated_at timestamptz not null default now()
 );
+
+-- Bloqueo biometrico (WebAuthn): la clave privada nunca sale del
+-- dispositivo, aqui solo se guarda lo necesario para verificar la firma.
+create table webauthn_credentials (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  credential_id text not null unique,
+  public_key text not null,
+  counter bigint not null default 0,
+  transports text[] not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+create index webauthn_credentials_user_id_idx on webauthn_credentials (user_id);
 
 -- Metas de ahorro con nombre propio. saved_amount es un aporte manual
 -- (botón "Agregar aporte"), no se calcula solo desde Gastos/Ingresos.
@@ -202,6 +217,7 @@ alter table uber_logs enable row level security;
 alter table user_settings enable row level security;
 alter table incomes enable row level security;
 alter table savings_goals enable row level security;
+alter table webauthn_credentials enable row level security;
 
 create policy "debts_select_own" on debts for select using (auth.uid () = user_id);
 
@@ -292,3 +308,15 @@ for update
   using (auth.uid () = user_id);
 
 create policy "savings_goals_delete_own" on savings_goals for delete using (auth.uid () = user_id);
+
+create policy "webauthn_credentials_select_own" on webauthn_credentials for select using (auth.uid () = user_id);
+
+create policy "webauthn_credentials_insert_own" on webauthn_credentials for insert
+with
+  check (auth.uid () = user_id);
+
+create policy "webauthn_credentials_update_own" on webauthn_credentials
+for update
+  using (auth.uid () = user_id);
+
+create policy "webauthn_credentials_delete_own" on webauthn_credentials for delete using (auth.uid () = user_id);

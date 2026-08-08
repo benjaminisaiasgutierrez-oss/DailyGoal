@@ -3,12 +3,10 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { updateSettings, type UberFormState } from "@/application/uber/manage-uber";
-import { WEEKDAY_LABELS, type WorkDaysMode } from "@/domain/entities/user-settings";
-import type { UserSettings } from "@/domain/entities/user-settings";
+import type { UserSettings, WorkDaysMode } from "@/domain/entities/user-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -62,21 +60,8 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Días que trabajas</Label>
+            <Label>Meta diaria</Label>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setMode("weekdays")}
-                aria-pressed={mode === "weekdays"}
-                className={cn(
-                  "flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors",
-                  mode === "weekdays"
-                    ? "border-primary bg-primary/10 font-medium"
-                    : "border-input text-muted-foreground"
-                )}
-              >
-                Por día de semana
-              </button>
               <button
                 type="button"
                 onClick={() => setMode("fixed_count")}
@@ -106,19 +91,6 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
             </div>
             <input type="hidden" name="workDaysMode" value={mode} />
 
-            <div className={cn("flex flex-wrap gap-3 pt-1", mode !== "weekdays" && "hidden")}>
-              {WEEKDAY_LABELS.map((label, day) => (
-                <label key={day} className="flex items-center gap-1.5 text-sm">
-                  <Checkbox
-                    name="workDays"
-                    value={String(day)}
-                    defaultChecked={settings.workDays.includes(day)}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-
             <div className={cn("pt-1", mode !== "fixed_count" && "hidden")}>
               <Input
                 id="workDaysPerMonth"
@@ -134,8 +106,7 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
 
             {mode === "automatic" && (
               <p className="pt-1 text-xs text-muted-foreground">
-                Reparte lo que falta del mes entre todos los días que quedan. Si un día ganas
-                menos, el resto sube; si ganas más, el resto baja.
+                Se ajusta cada día según cuánto ganaste.
               </p>
             )}
           </div>
