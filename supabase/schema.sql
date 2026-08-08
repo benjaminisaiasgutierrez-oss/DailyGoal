@@ -110,7 +110,9 @@ as $$
 $$;
 
 -- Configuración por usuario. work_days: 0 = domingo ... 6 = sábado.
--- work_days_mode: 'weekdays' usa work_days; 'fixed_count' usa work_days_per_month.
+-- work_days_mode: 'weekdays' usa work_days; 'fixed_count' usa work_days_per_month;
+-- 'automatic' ignora ambos y reparte el mes completo entre todos los días
+-- calendario que quedan, recalculando la meta diaria según lo ya ganado.
 -- Mantención: km_since_maintenance se calcula sumando uber_logs desde
 -- last_maintenance_date (no es un contador propio), así que un registro
 -- editado o borrado no lo desincroniza.
@@ -119,7 +121,7 @@ create table user_settings (
   fuel_price_per_liter numeric(10, 2) not null default 0,
   km_per_liter numeric(6, 2) not null default 0,
   work_days smallint[] not null default '{1,2,3,4,5,6}',
-  work_days_mode text not null default 'weekdays' check (work_days_mode in ('weekdays', 'fixed_count')),
+  work_days_mode text not null default 'weekdays' check (work_days_mode in ('weekdays', 'fixed_count', 'automatic')),
   work_days_per_month smallint check (
     work_days_per_month is null
     or (

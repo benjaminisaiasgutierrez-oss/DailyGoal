@@ -7,9 +7,11 @@ import { getUberLogsInRange, getUserSettings } from "@/application/uber/manage-u
 import { getIncomesInRange } from "@/application/incomes/manage-incomes";
 import { getSavingsGoals } from "@/application/savings/manage-savings";
 import {
+  calculateAutomaticDailyGoal,
   calculateDailyGoal,
   calculateMonthlyTotal,
   calculateRemainingBalance,
+  calculateSavingsMonthlyPace,
   resolveWorkingDaysInMonth,
   isDebtOwingThisMonth,
 } from "@/domain/finance/calculations";
@@ -42,8 +44,6 @@ export default async function HomePage() {
   const uberModeEnabled = settings.uberModeEnabled;
 
   const monthlyTotal = calculateMonthlyTotal(debts);
-  const workingDays = resolveWorkingDaysInMonth(settings, year, month);
-  const dailyGoal = calculateDailyGoal(monthlyTotal, workingDays);
 
   const uberEarnedThisMonth = logsThisMonth.reduce(
     (sum, log) => sum + calculateTotalEarnings(log),
@@ -62,6 +62,33 @@ export default async function HomePage() {
   const uberEarnedToday = todayLogs.reduce((sum, log) => sum + calculateTotalEarnings(log), 0);
   const earnedToday = uberEarnedToday + incomeToday;
   const fuelCostToday = todayLogs.reduce((sum, log) => sum + (log.fuelCost ?? 0), 0);
+
+  // El total a repartir incluye la cuota mensual de las metas de ahorro con
+  // fecha límite, además de las deudas (que siguen mostrándose solas en
+  // "Cuentas del mes" más abajo).
+  const savingsMonthlyPace = calculateSavingsMonthlyPace(savingsGoals, today);
+  const goalTotal = monthlyTotal + savingsMonthlyPace;
+
+  let dailyGoal: number;
+  let goalSurplus = 0;
+  if (settings.workDaysMode === "automatic") {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const daysRemaining = daysInMonth - todayDayOfMonth + 1;
+    const earnedBeforeToday = earnedThisMonth - earnedToday;
+    const automatic = calculateAutomaticDailyGoal({
+      totalNeeded: goalTotal,
+      earnedBeforeToday,
+      daysRemaining,
+    });
+    dailyGoal = automatic.amount;
+    goalSurplus = automatic.surplus;
+  } else {
+    const workingDays = resolveWorkingDaysInMonth(settings, year, month);
+    dailyGoal = calculateDailyGoal(goalTotal, workingDays);
+  }
+
+  const isAheadOfGoal = goalSurplus > 0;
+  const displaySurplus = goalSurplus + earnedToday;
   const totalToEarnToday = dailyGoal + fuelCostToday;
   const net = earnedThisMonth - monthlyTotal;
 
@@ -98,26 +125,40 @@ export default async function HomePage() {
 
       <Card>
         <CardContent className="flex flex-col gap-3 py-6">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <span className="text-sm text-muted-foreground">Meta diaria</span>
-            <span className="text-3xl font-semibold tracking-tight">{formatCLP(dailyGoal)}</span>
-          </div>
-
-          {uberModeEnabled && fuelCostToday > 0 && (
-            <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-3 py-2 text-xs">
-              <span className="font-medium">Total a ganar hoy {formatCLP(totalToEarnToday)}</span>
-              <span className="text-muted-foreground">
-                Bencina de hoy {formatCLP(fuelCostToday)}
+          {isAheadOfGoal ? (
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-sm text-muted-foreground">Meta diaria</span>
+              <span className="text-3xl font-semibold tracking-tight">
+                +{formatCLP(displaySurplus)}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {savingsGoals.length > 0 ? "De sobra, destinado a tu ahorro" : "De sobra este mes"}
               </span>
             </div>
+          ) : (
+            <>
+              <div className="flex flex-col items-center gap-1 text-center">
+                <span className="text-sm text-muted-foreground">Meta diaria</span>
+                <span className="text-3xl font-semibold tracking-tight">{formatCLP(dailyGoal)}</span>
+              </div>
+
+              {uberModeEnabled && fuelCostToday > 0 && (
+                <div className="flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-3 py-2 text-xs">
+                  <span className="font-medium">Total a ganar hoy {formatCLP(totalToEarnToday)}</span>
+                  <span className="text-muted-foreground">
+                    Bencina de hoy {formatCLP(fuelCostToday)}
+                  </span>
+                </div>
+              )}
+
+              <Progress value={todayProgress} aria-label="Progreso de la meta diaria" />
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Ganaste {formatCLP(earnedToday)}</span>
+                <span>Faltan {formatCLP(remainingToday)}</span>
+              </div>
+            </>
           )}
-
-          <Progress value={todayProgress} aria-label="Progreso de la meta diaria" />
-
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Ganaste {formatCLP(earnedToday)}</span>
-            <span>Faltan {formatCLP(remainingToday)}</span>
-          </div>
         </CardContent>
       </Card>
 

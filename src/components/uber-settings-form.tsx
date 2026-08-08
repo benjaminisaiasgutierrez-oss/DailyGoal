@@ -90,6 +90,19 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
               >
                 Cantidad fija al mes
               </button>
+              <button
+                type="button"
+                onClick={() => setMode("automatic")}
+                aria-pressed={mode === "automatic"}
+                className={cn(
+                  "flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors",
+                  mode === "automatic"
+                    ? "border-primary bg-primary/10 font-medium"
+                    : "border-input text-muted-foreground"
+                )}
+              >
+                Automático
+              </button>
             </div>
             <input type="hidden" name="workDaysMode" value={mode} />
 
@@ -118,6 +131,13 @@ export function UberSettingsForm({ settings }: { settings: UserSettings }) {
                 defaultValue={settings.workDaysPerMonth ?? undefined}
               />
             </div>
+
+            {mode === "automatic" && (
+              <p className="pt-1 text-xs text-muted-foreground">
+                Reparte lo que falta del mes entre todos los días que quedan. Si un día ganas
+                menos, el resto sube; si ganas más, el resto baja.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

@@ -1,4 +1,4 @@
-export const WORK_DAYS_MODES = ["weekdays", "fixed_count"] as const;
+export const WORK_DAYS_MODES = ["weekdays", "fixed_count", "automatic"] as const;
 
 export type WorkDaysMode = (typeof WORK_DAYS_MODES)[number];
 

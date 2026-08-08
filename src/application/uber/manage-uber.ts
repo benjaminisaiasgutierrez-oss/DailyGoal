@@ -6,7 +6,12 @@ import { createClient } from "@/infrastructure/persistence/supabase-server";
 import { verifySession } from "@/application/auth/get-session";
 import { mapUberLog, mapUserSettings } from "@/infrastructure/persistence/mappers";
 import { FUEL_TYPES, RIDESHARE_PLATFORMS, type UberLog } from "@/domain/entities/uber-log";
-import { DEFAULT_WORK_DAYS, type UserSettings } from "@/domain/entities/user-settings";
+import {
+  DEFAULT_WORK_DAYS,
+  WORK_DAYS_MODES,
+  type UserSettings,
+  type WorkDaysMode,
+} from "@/domain/entities/user-settings";
 import { todayISO } from "@/lib/date";
 
 export async function getUberLogs(limit = 30): Promise<UberLog[]> {
@@ -251,7 +256,7 @@ export async function updateSettings(_prev: UberFormState, formData: FormData): 
   if (!Number.isFinite(kmPerLiter) || kmPerLiter < 0) {
     return { error: "Ingresa un rendimiento km/litro válido." };
   }
-  if (workDaysMode !== "weekdays" && workDaysMode !== "fixed_count") {
+  if (!WORK_DAYS_MODES.includes(workDaysMode as WorkDaysMode)) {
     return { error: "Modo de días de trabajo inválido." };
   }
   if (workDaysMode === "weekdays" && workDays.length === 0) {
